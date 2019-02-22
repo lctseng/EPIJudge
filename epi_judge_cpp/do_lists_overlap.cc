@@ -1,16 +1,117 @@
-#include <set>
-#include <stdexcept>
 #include "list_node.h"
 #include "test_framework/generic_test.h"
 #include "test_framework/test_failure.h"
 #include "test_framework/timed_executor.h"
+#include <set>
+#include <stdexcept>
+
+shared_ptr<ListNode<int>>
+FindCycleInListPrev(shared_ptr<ListNode<int>> origHead) {
+  if (!origHead)
+    return nullptr;
+  shared_ptr<ListNode<int>> head(new ListNode<int>({}, origHead));
+  auto slow = head, fast = head, prevFast = head;
+  while (true) {
+    slow = slow->next;
+    prevFast = fast;
+    fast = fast->next;
+    if (!fast)
+      return prevFast;
+    prevFast = fast;
+    fast = fast->next;
+    if (!fast)
+      return prevFast;
+    if (slow == fast)
+      break;
+  }
+  auto finder = head, prevSlow = head;
+  while (true) {
+    prevSlow = slow;
+    slow = slow->next;
+    finder = finder->next;
+    if (slow == finder) {
+      return prevSlow;
+    }
+  }
+}
+
+shared_ptr<ListNode<int>>
+OverlappingNoCycleLists(shared_ptr<ListNode<int>> l0,
+                        shared_ptr<ListNode<int>> l1) {
+  // ensure two list exists
+  if (!l0 || !l1)
+    return nullptr;
+  // edge case: fully overlapped
+  if (l0 == l1)
+    return l0;
+  // link L1's tail to its head
+  // traverse L0, if meet null, then no overlap
+  // if meed L1's head, is overlap
+  // Time: O(L0+L1), Space: O(1)
+  // step 1: link L1
+  auto tail1 = l1;
+  while (tail1->next) {
+    tail1 = tail1->next;
+  }
+  tail1->next = l1;
+  // step 2: perform cycle detection
+  auto slow = l0, fast = l0;
+  shared_ptr<ListNode<int>> res = nullptr;
+  bool hasCycle = false;
+  while (true) {
+    slow = slow->next;
+    fast = fast->next;
+    if (!fast)
+      break;
+    fast = fast->next;
+    if (!fast)
+      break;
+    if (fast == slow) {
+      hasCycle = true;
+      break;
+    }
+  }
+  if (hasCycle) {
+    auto finder = l0;
+    while (true) {
+      slow = slow->next;
+      finder = finder->next;
+      if (slow == finder) {
+        res = slow;
+        break;
+      }
+    }
+  }
+  // remember to restore
+  tail1->next = nullptr;
+  return res;
+}
 
 shared_ptr<ListNode<int>> OverlappingLists(shared_ptr<ListNode<int>> l0,
                                            shared_ptr<ListNode<int>> l1) {
-  // TODO - you fill in here.
-  return nullptr;
+  // edge case: one list is empty
+  if (!l0 || !l1)
+    return nullptr;
+  // edge case: fully overlapped
+  if (l0 == l1)
+    return l0;
+  // record and remove both cycle
+  auto cycle0Prev = FindCycleInListPrev(l0);
+  auto restoreNext0 = cycle0Prev->next;
+  cycle0Prev->next = nullptr;
+  // THE ORDER IS IMPORTANT! Since the tail may be shared :P
+  auto cycle1Prev = FindCycleInListPrev(l1);
+  auto restoreNext1 = cycle1Prev->next;
+  cycle1Prev->next = nullptr;
+  // perform non-cycle test
+  auto res = OverlappingNoCycleLists(l0, l1);
+
+  // restore cycle if needed
+  cycle0Prev->next = restoreNext0;
+  cycle1Prev->next = restoreNext1;
+  return res;
 }
-void OverlappingListsWrapper(TimedExecutor& executor,
+void OverlappingListsWrapper(TimedExecutor &executor,
                              shared_ptr<ListNode<int>> l0,
                              shared_ptr<ListNode<int>> l1,
                              shared_ptr<ListNode<int>> common, int cycle0,
@@ -82,7 +183,7 @@ void OverlappingListsWrapper(TimedExecutor& executor,
   }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"executor", "l0",     "l1",
                                        "common",   "cycle0", "cycle1"};
