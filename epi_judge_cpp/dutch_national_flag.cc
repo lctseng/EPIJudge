@@ -1,16 +1,32 @@
-#include <array>
-#include <vector>
 #include "test_framework/generic_test.h"
 #include "test_framework/test_failure.h"
 #include "test_framework/timed_executor.h"
+#include <array>
+#include <vector>
+using std::swap;
 using std::vector;
 typedef enum { kRed, kWhite, kBlue } Color;
 
-void DutchFlagPartition(int pivot_index, vector<Color>* A_ptr) {
-  // TODO - you fill in here.
+void DutchFlagPartition(int pivot_index, vector<Color> *A_ptr) {
+  vector<Color> &A = *A_ptr;
+  Color pivot = A[pivot_index];
+  // three-way partition
+  int small = 0, mid = 0, large = A.size() - 1;
+  while (mid <= large) {
+    if (A[mid] > pivot) {
+      swap(A[mid], A[large]);
+      --large;
+    } else if (A[mid] < pivot) {
+      swap(A[mid], A[small]);
+      ++mid;
+      ++small;
+    } else {
+      ++mid;
+    }
+  }
   return;
 }
-void DutchFlagPartitionWrapper(TimedExecutor& executor, const vector<int>& A,
+void DutchFlagPartitionWrapper(TimedExecutor &executor, const vector<int> &A,
                                int pivot_idx) {
   vector<Color> colors;
   colors.resize(A.size());
@@ -47,7 +63,7 @@ void DutchFlagPartitionWrapper(TimedExecutor& executor, const vector<int>& A,
   }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"executor", "A", "pivot_idx"};
   return GenericTestMain(args, "dutch_national_flag.cc",
