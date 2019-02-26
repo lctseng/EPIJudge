@@ -1,21 +1,46 @@
-#include <memory>
 #include "binary_tree_with_parent_prototype.h"
 #include "test_framework/binary_tree_utils.h"
 #include "test_framework/generic_test.h"
 #include "test_framework/test_failure.h"
 #include "test_framework/timed_executor.h"
+#include <memory>
+#include <set>
 using std::unique_ptr;
+using std::unordered_set;
 
-BinaryTreeNode<int>* LCA(const unique_ptr<BinaryTreeNode<int>>& node0,
-                         const unique_ptr<BinaryTreeNode<int>>& node1) {
-  // TODO - you fill in here.
+BinaryTreeNode<int> *LCA(const unique_ptr<BinaryTreeNode<int>> &node0,
+                         const unique_ptr<BinaryTreeNode<int>> &node1) {
+  unordered_set<BinaryTreeNode<int> *> seen;
+  if (node0.get() == node1.get())
+    return node0.get();
+  BinaryTreeNode<int> *curA = node0.get(), *curB = node1.get();
+  seen.insert(curA);
+  seen.insert(curB);
+  while (curA || curB) {
+    if (curA) {
+      auto nextA = curA->parent;
+      if (nextA && seen.count(nextA)) {
+        return nextA;
+      }
+      seen.insert(nextA);
+      curA = nextA;
+    }
+    if (curB) {
+      auto nextB = curB->parent;
+      if (nextB && seen.count(nextB)) {
+        return nextB;
+      }
+      seen.insert(nextB);
+      curB = nextB;
+    }
+  }
   return nullptr;
 }
-int LcaWrapper(TimedExecutor& executor,
-               const unique_ptr<BinaryTreeNode<int>>& tree, int key0,
+int LcaWrapper(TimedExecutor &executor,
+               const unique_ptr<BinaryTreeNode<int>> &tree, int key0,
                int key1) {
-  const unique_ptr<BinaryTreeNode<int>>& node0 = MustFindNode(tree, key0);
-  const unique_ptr<BinaryTreeNode<int>>& node1 = MustFindNode(tree, key1);
+  const unique_ptr<BinaryTreeNode<int>> &node0 = MustFindNode(tree, key0);
+  const unique_ptr<BinaryTreeNode<int>> &node1 = MustFindNode(tree, key1);
 
   auto result = executor.Run([&] { return LCA(node0, node1); });
 
@@ -25,7 +50,7 @@ int LcaWrapper(TimedExecutor& executor,
   return result->data;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"executor", "tree", "key0", "key1"};
   return GenericTestMain(args, "lowest_common_ancestor_close_ancestor.cc",
