@@ -10,39 +10,25 @@ using std::vector;
 int FindKthLargestWrapper(int k, vector<int> &A) {
   int begin = 0, end = A.size();
   while (begin < end - 1) {
-    // find pivot
-    int sz = end - begin;
-    int pivotIndex = begin + rand() % sz;
+    // partition around pivot
+    int pivotIndex = begin + rand() % (end - begin);
     int pivot = A[pivotIndex];
-    swap(A[pivotIndex], A[begin]);
-    auto largerIt = partition(A.begin() + begin + 1, A.begin() + end,
-                              [=](int n) { return n <= pivot; });
-    int numSmallEqual = largerIt - (A.begin() + begin);
-
-    int numLarger = sz - numSmallEqual;
-    if (numLarger == 0 && k > 1) {
-      // we picked the max value and it is not we wanted (k != 1)
-      k -= 1;
-      begin += 1;
-    } else if (numLarger == k - 1) {
-      // the pivot is kth largest
-      return pivot;
-    } else if (numLarger > k - 1) {
-      // we have too may large number. the answer only exists in those numbers
-      // skip all small/equal numbers
-      begin += numSmallEqual;
-    } else if (numLarger == sz - 1) {
-      // we picked the min value and numLarger != k-1
-      // we discard this value
-      begin++;
+    swap(A[pivotIndex], A[end - 1]);
+    auto lessEqualIt = partition(A.begin() + begin, A.begin() + end - 1,
+                                 [=](int n) { return n > pivot; });
+    swap(*lessEqualIt, A[end - 1]);
+    int newPivotIndex = lessEqualIt - A.begin(); // global index
+    if (newPivotIndex == k - 1) {
+      return A[newPivotIndex];
+    } else if (newPivotIndex < k - 1) {
+      // need a smaller number
+      begin = newPivotIndex + 1;
     } else {
-      // we have not enough large numbers
-      // we need to find extra (k - numLarger)-th largest number in the smaller
-      // part
-      k -= numLarger;
-      end = begin + numSmallEqual;
+      // need a larger number
+      end = newPivotIndex;
     }
   }
+  // not reach here
   return A[begin];
 }
 
