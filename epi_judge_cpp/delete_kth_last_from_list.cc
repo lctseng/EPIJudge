@@ -1,16 +1,34 @@
-#include <memory>
 #include "list_node.h"
 #include "test_framework/generic_test.h"
+#include <memory>
 using std::shared_ptr;
 
 // Assumes L has at least k nodes, deletes the k-th last node in L.
-shared_ptr<ListNode<int>> RemoveKthLast(const shared_ptr<ListNode<int>>& L,
+shared_ptr<ListNode<int>> RemoveKthLast(const shared_ptr<ListNode<int>> &L,
                                         int k) {
-  // TODO - you fill in here.
-  return nullptr;
+  // maintain two iterators, distance is K
+  shared_ptr<ListNode<int>> current = L, next = L;
+  for (int i = 0; i < k; i++) {
+    next = next->next;
+  }
+  // advance both, once next is null, delete current
+  shared_ptr<ListNode<int>> prev = nullptr;
+  while (next) {
+    next = next->next;
+    prev = current;
+    current = current->next;
+  }
+  // delete current
+  if (!prev) {
+    // current is head
+    return current->next;
+  } else {
+    prev->next = current->next;
+    return L;
+  }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"L", "k"};
   return GenericTestMain(args, "delete_kth_last_from_list.cc",
