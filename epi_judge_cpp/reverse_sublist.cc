@@ -5,37 +5,26 @@ shared_ptr<ListNode<int>> ReverseSublist(shared_ptr<ListNode<int>> L, int start,
                                          int finish) {
   if (!L || start == finish)
     return L;
-  // find: before, first, last, past
-  shared_ptr<ListNode<int>> before = nullptr, first = L, last = nullptr,
-                            past = nullptr;
+  auto dummy = make_shared<ListNode<int>>(0, L);
+  // find the first to be reversed
+  auto reversedTail = L, preTail = dummy;
   for (int i = 1; i < start; i++) {
-    before = first;
-    first = first->next;
+    preTail = reversedTail;
+    reversedTail = reversedTail->next;
   }
-  last = first;
-  past = first->next;
+  auto prev = reversedTail, current = reversedTail->next;
   for (int i = start; i < finish; i++) {
-    last = past;
-    past = past->next;
-  }
-  // reverse between first and last
-  auto prev = first, current = first->next;
-  while (true) {
     auto next = current->next;
     current->next = prev;
-    // check last one?
-    if (current == last)
-      break;
     prev = current;
     current = next;
   }
-  // fix before and first's next
-  if (before)
-    before->next = last;
-  first->next = past;
-  // if the start is 1, we return new node (last)
-  // otherwise we return L
-  return start == 1 ? last : L;
+  // after that, prev points to new head
+  // current points to past-over-1 next
+  // fix it!
+  preTail->next = prev;
+  reversedTail->next = current;
+  return dummy->next;
 }
 
 int main(int argc, char *argv[]) {
