@@ -4,39 +4,46 @@
 #include <stdexcept>
 using std::length_error;
 #include <cmath>
-#include <list>
-using std::list;
+#include <stack>
+using std::stack;
 
 class Stack {
 public:
   struct Entry {
-    int data;
-    int lastMax;
+    int value;
+    int count;
   };
 
-  bool Empty() const { return data.empty(); }
-  int Max() const { return currentMax; }
+  bool Empty() const { return dataStack.empty(); }
+  int Max() const { return maxStack.top().value; }
   int Pop() {
-    if (data.empty()) {
+    if (dataStack.empty()) {
       throw "Empty stack";
     }
-    Entry ent = data.back();
-    data.pop_back();
-    currentMax = ent.lastMax;
-    return ent.data;
+    int topData = dataStack.top();
+    dataStack.pop();
+    if (topData <= Max()) {
+      if (--maxStack.top().count == 0) {
+        maxStack.pop();
+      }
+    }
+
+    return topData;
   }
   void Push(int x) {
-    Entry ent;
-    ent.lastMax = currentMax;
-    ent.data = x;
-    if (x > currentMax)
-      currentMax = x;
-    data.push_back(ent);
+    if (maxStack.size() && x <= Max()) {
+      // reuse this max
+      maxStack.top().count++;
+    } else {
+      // need new max
+      maxStack.push({x, 1});
+    }
+    dataStack.push(x);
   }
 
 private:
-  list<Entry> data;
-  int currentMax = INT_MIN;
+  stack<Entry> maxStack;
+  stack<int> dataStack;
 };
 
 struct StackOp {
