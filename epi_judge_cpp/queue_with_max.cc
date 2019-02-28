@@ -1,29 +1,41 @@
-#include <stdexcept>
 #include "test_framework/generic_test.h"
 #include "test_framework/serialization_traits.h"
 #include "test_framework/test_failure.h"
+#include <queue>
+#include <stdexcept>
+using std::deque;
 using std::length_error;
+using std::queue;
 
 class QueueWithMax {
- public:
+public:
   void Enqueue(int x) {
-    // TODO - you fill in here.
-    return;
+    data.push(x);
+    // update monoDesc
+    while (monoDesc.size() && x > monoDesc.back()) {
+      monoDesc.pop_back();
+    }
+    monoDesc.push_back(x);
   }
   int Dequeue() {
-    // TODO - you fill in here.
-    return 0;
+    int ret = data.front();
+    data.pop();
+    if (ret == monoDesc.front()) {
+      monoDesc.pop_front();
+    }
+    return ret;
   }
-  int Max() const {
-    // TODO - you fill in here.
-    return 0;
-  }
+  int Max() const { return monoDesc.front(); }
+
+private:
+  queue<int> data;
+  deque<int> monoDesc;
 };
 struct QueueOp {
   enum { kConstruct, kDequeue, kEnqueue, kMax } op;
   int argument;
 
-  QueueOp(const std::string& op_string, int arg) : argument(arg) {
+  QueueOp(const std::string &op_string, int arg) : argument(arg) {
     if (op_string == "QueueWithMax") {
       op = kConstruct;
     } else if (op_string == "dequeue") {
@@ -42,39 +54,38 @@ template <>
 struct SerializationTraits<QueueOp> : UserSerTraits<QueueOp, std::string, int> {
 };
 
-void QueueTester(const std::vector<QueueOp>& ops) {
+void QueueTester(const std::vector<QueueOp> &ops) {
   try {
     QueueWithMax q;
-    for (auto& x : ops) {
+    for (auto &x : ops) {
       switch (x.op) {
-        case QueueOp::kConstruct:
-          break;
-        case QueueOp::kDequeue: {
-          int result = q.Dequeue();
-          if (result != x.argument) {
-            throw TestFailure("Dequeue: expected " +
-                              std::to_string(x.argument) + ", got " +
-                              std::to_string(result));
-          }
-        } break;
-        case QueueOp::kEnqueue:
-          q.Enqueue(x.argument);
-          break;
-        case QueueOp::kMax: {
-          int s = q.Max();
-          if (s != x.argument) {
-            throw TestFailure("Max: expected " + std::to_string(x.argument) +
-                              ", got " + std::to_string(s));
-          }
-        } break;
+      case QueueOp::kConstruct:
+        break;
+      case QueueOp::kDequeue: {
+        int result = q.Dequeue();
+        if (result != x.argument) {
+          throw TestFailure("Dequeue: expected " + std::to_string(x.argument) +
+                            ", got " + std::to_string(result));
+        }
+      } break;
+      case QueueOp::kEnqueue:
+        q.Enqueue(x.argument);
+        break;
+      case QueueOp::kMax: {
+        int s = q.Max();
+        if (s != x.argument) {
+          throw TestFailure("Max: expected " + std::to_string(x.argument) +
+                            ", got " + std::to_string(s));
+        }
+      } break;
       }
     }
-  } catch (const length_error&) {
+  } catch (const length_error &) {
     throw TestFailure("Unexpected length_error exception");
   }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"ops"};
   return GenericTestMain(args, "queue_with_max.cc", "queue_with_max.tsv",
