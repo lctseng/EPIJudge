@@ -3,48 +3,37 @@
 #include "test_framework/generic_test.h"
 #include "test_framework/test_failure.h"
 #include "test_framework/timed_executor.h"
+using std::abs;
+using std::swap;
+
+int getDepth(BinaryTreeNode<int> *node) {
+  int count = 0;
+  while (node) {
+    node = node->parent;
+    ++count;
+  }
+  return count;
+}
 
 BinaryTreeNode<int> *LCA(const unique_ptr<BinaryTreeNode<int>> &node0,
                          const unique_ptr<BinaryTreeNode<int>> &node1) {
   // perform a listed list loop detection
-  BinaryTreeNode<int> *headA = node0.get(), *headB = node1.get();
-  if (!headA || !headB)
-    return nullptr;
-  BinaryTreeNode<int> *tailB = headB;
-  while (tailB->parent) {
-    tailB = tailB->parent;
+  int depth0 = getDepth(node0.get()), depth1 = getDepth(node1.get());
+  BinaryTreeNode<int> *deepNode = node0.get(), *swallowNode = node1.get();
+  if (depth1 > depth0) {
+    swap(deepNode, swallowNode);
   }
-  tailB->parent = headB;
-  // during traversal, if fast reach null, change to headB
-  BinaryTreeNode<int> *slow = nullptr, *fast = nullptr, *finder = nullptr;
-  while (true) {
-    if (!slow) {
-      slow = headA;
-    } else {
-      slow = slow->parent;
-    }
-    if (!fast) {
-      fast = headA;
-    } else {
-      fast = fast->parent;
-    }
-    fast = fast->parent;
-    if (fast == slow)
-      break;
+  int depthDiff = abs(depth1 - depth0);
+  // go from depth node first
+  while (depthDiff-- > 0) {
+    deepNode = deepNode->parent;
   }
-  while (true) {
-    slow = slow->parent;
-    if (!finder) {
-      finder = headA;
-    } else {
-      finder = finder->parent;
-    }
-    if (slow == finder) {
-      // restore and return
-      tailB->parent = nullptr;
-      return slow;
-    }
+  // go together
+  while (deepNode != swallowNode) {
+    deepNode = deepNode->parent;
+    swallowNode = swallowNode->parent;
   }
+  return deepNode;
 }
 int LcaWrapper(TimedExecutor &executor,
                const unique_ptr<BinaryTreeNode<int>> &tree, int key0,
