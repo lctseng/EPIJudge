@@ -1,19 +1,39 @@
-#include <vector>
 #include "test_framework/fmt_print.h"
 #include "test_framework/generic_test.h"
 #include "test_framework/test_failure.h"
 #include "test_framework/timed_executor.h"
+#include <vector>
 using std::vector;
 const int kMPG = 20;
 
 // gallons[i] is the amount of gas in city i, and distances[i] is the distance
 // city i to the next city.
-int FindAmpleCity(const vector<int>& gallons, const vector<int>& distances) {
-  // TODO - you fill in here.
-  return 0;
+int FindAmpleCity(const vector<int> &gallons, const vector<int> &distances) {
+  int curSum = gallons[0] * kMPG - distances[0];
+  int minIndex = 0, minSum = curSum;
+  for (int i = 1; i < gallons.size(); i++) {
+    curSum += gallons[i] * kMPG - distances[i];
+    if (curSum < minSum) {
+      minSum = curSum;
+      minIndex = i;
+    }
+  }
+  if (minSum < 0) {
+    // we have a negative fuel at some station
+    // rotate from back until find amper city
+    for (int i = gallons.size() - 1; i >= minIndex; i--) {
+      minSum += gallons[i] * kMPG - distances[i];
+      if (minSum >= 0)
+        return i;
+    }
+    return -1; // there is no ample city
+  } else {
+    // otherwise, 0 is already the ample city
+    return 0;
+  }
 }
-void FindAmpleCityWrapper(TimedExecutor& executor, const vector<int>& gallons,
-                          const vector<int>& distances) {
+void FindAmpleCityWrapper(TimedExecutor &executor, const vector<int> &gallons,
+                          const vector<int> &distances) {
   int result = executor.Run([&] { return FindAmpleCity(gallons, distances); });
   const int num_cities = gallons.size();
   int tank = 0;
@@ -26,7 +46,7 @@ void FindAmpleCityWrapper(TimedExecutor& executor, const vector<int>& gallons,
   }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"executor", "gallons", "distances"};
   return GenericTestMain(args, "refueling_schedule.cc",
