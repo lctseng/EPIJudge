@@ -9,28 +9,18 @@ const int kMPG = 20;
 // gallons[i] is the amount of gas in city i, and distances[i] is the distance
 // city i to the next city.
 int FindAmpleCity(const vector<int> &gallons, const vector<int> &distances) {
-  int curSum = gallons[0] * kMPG - distances[0];
-  int minIndex = 0, minSum = curSum;
-  for (int i = 1; i < gallons.size(); i++) {
-    curSum += gallons[i] * kMPG - distances[i];
+  // once we have negative gas, we need to start from here
+  int sz = gallons.size();
+  int curSum = 0, minSum = 0;
+  int minIndex = 0;
+  for (int i = 1; i < sz; i++) {
+    curSum += gallons[i - 1] * kMPG - distances[i - 1];
     if (curSum < minSum) {
       minSum = curSum;
       minIndex = i;
     }
   }
-  if (minSum < 0) {
-    // we have a negative fuel at some station
-    // rotate from back until find amper city
-    for (int i = gallons.size() - 1; i >= minIndex; i--) {
-      minSum += gallons[i] * kMPG - distances[i];
-      if (minSum >= 0)
-        return i;
-    }
-    return -1; // there is no ample city
-  } else {
-    // otherwise, 0 is already the ample city
-    return 0;
-  }
+  return minIndex;
 }
 void FindAmpleCityWrapper(TimedExecutor &executor, const vector<int> &gallons,
                           const vector<int> &distances) {
