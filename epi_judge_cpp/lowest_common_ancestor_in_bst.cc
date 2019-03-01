@@ -13,14 +13,20 @@ BstNode<int> *FindLCA(const unique_ptr<BstNode<int>> &tree,
                       const unique_ptr<BstNode<int>> &b) {
   if (!tree || tree == s || tree == b)
     return tree.get();
-  if (s->data > tree->data && b->data > tree->data) {
-    return FindLCA(tree->right, s, b);
+
+  BstNode<int> *current = tree.get();
+  while (true) {
+    if (!current || current == s.get() || current == b.get()) {
+      return current;
+    }
+    if (s->data > current->data && b->data > current->data) {
+      current = current->right.get();
+    } else if (s->data < current->data && b->data < current->data) {
+      current = current->left.get();
+    } else {
+      return current;
+    }
   }
-  if (s->data < tree->data && b->data < tree->data) {
-    return FindLCA(tree->left, s, b);
-  }
-  // one larger, one smaller
-  return tree.get();
 }
 int LcaWrapper(TimedExecutor &executor,
                const std::unique_ptr<BstNode<int>> &tree, int key0, int key1) {
