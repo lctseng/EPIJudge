@@ -3,6 +3,7 @@
 #include <vector>
 using std::min;
 using std::string;
+using std::swap;
 using std::vector;
 
 int LevenshteinDistanceHelper(vector<vector<int>> &dp, const string &A,
@@ -28,12 +29,34 @@ int LevenshteinDistanceHelper(vector<vector<int>> &dp, const string &A,
   }
 }
 
-int LevenshteinDistance(const string &A, const string &B) {
-  vector<vector<int>> dp(A.length());
-  for (int i = 0; i < A.length(); i++) {
-    dp[i].resize(B.length(), -1);
+int LevenshteinDistance(const string &_A, const string &_B) {
+  const string *longPtr = &_A, *shortPtr = &_B;
+  if (longPtr->length() < shortPtr->length()) {
+    swap(longPtr, shortPtr);
   }
-  return LevenshteinDistanceHelper(dp, A, B, 0, 0);
+  const string &A = *longPtr;
+  const string &B = *shortPtr;
+  // A loop times, space = O(len(B))
+  // total time: O(len(A) * len(B))
+  vector<int> dp0(B.length() + 1), dp1(B.length() + 1);
+  vector<int> *prevDp = &dp0, *currDp = &dp1;
+  for (int j = 0; j <= B.length(); j++) {
+    prevDp->at(j) = j;
+  }
+  // fill table
+  for (int i = 1; i <= A.length(); i++) {
+    currDp->at(0) = i; // BE CAREFUL! current dp init condition!
+    for (int j = 1; j <= B.length(); j++) {
+      if (A[i - 1] == B[j - 1]) {
+        currDp->at(j) = prevDp->at(j - 1);
+      } else {
+        currDp->at(j) =
+            min(prevDp->at(j - 1), min(prevDp->at(j), currDp->at(j - 1))) + 1;
+      }
+    }
+    swap(currDp, prevDp);
+  }
+  return prevDp->at(B.length());
 }
 
 int main(int argc, char *argv[]) {
