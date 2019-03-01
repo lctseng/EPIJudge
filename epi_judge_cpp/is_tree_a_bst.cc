@@ -2,8 +2,10 @@
 #include "test_framework/generic_test.h"
 #include <climits>
 #include <memory>
+#include <queue>
 using std::max;
 using std::min;
+using std::queue;
 using std::unique_ptr;
 
 struct Status {
@@ -29,8 +31,35 @@ Status IsBinaryTreeBSTHelper(const unique_ptr<BinaryTreeNode<int>> &tree) {
           max(tree->data, rightStatus.maxValue)};
 }
 
+struct QueueEntry {
+  BinaryTreeNode<int> *node;
+  int upper;
+  int lower;
+};
+
+bool IsBinaryTreeBSTIterative(const unique_ptr<BinaryTreeNode<int>> &tree) {
+  if (!tree)
+    return true;
+  queue<QueueEntry> q;
+  q.push({tree.get(), INT_MAX, INT_MIN});
+  while (q.size()) {
+    auto ent = q.front();
+    q.pop();
+    if (ent.node->data > ent.upper || ent.node->data < ent.lower)
+      return false;
+    if (ent.node->left) {
+      q.push({ent.node->left.get(), ent.node->data, ent.lower});
+    }
+    if (ent.node->right) {
+      q.push({ent.node->right.get(), ent.upper, ent.node->data});
+    }
+  }
+  return true;
+}
+
 bool IsBinaryTreeBST(const unique_ptr<BinaryTreeNode<int>> &tree) {
-  return IsBinaryTreeBSTHelper(tree).isBST;
+  // return IsBinaryTreeBSTHelper(tree).isBST;
+  return IsBinaryTreeBSTIterative(tree);
 }
 
 int main(int argc, char *argv[]) {
