@@ -28,11 +28,20 @@ int OptimumSubjectToCapacityHelper(vector<vector<int>> &dp,
 }
 
 int OptimumSubjectToCapacity(const vector<Item> &items, int capacity) {
-  vector<vector<int>> dp(items.size());
-  for (int i = 0; i < items.size(); i++) {
-    dp[i].assign(capacity + 1, -1);
+  if (items.empty())
+    return 0;
+  vector<int> dp(capacity + 1, 0);
+  for (int j = capacity; j >= items[0].weight; j--) {
+    dp[j] = items[0].value;
   }
-  return OptimumSubjectToCapacityHelper(dp, items, capacity, 0);
+  for (int i = 1; i < items.size(); i++) {
+    for (int j = capacity; j >= 1; j--) {
+      if (items[i].weight <= j) {
+        dp[j] = max(dp[j], dp[j - items[i].weight] + items[i].value);
+      }
+    }
+  }
+  return dp[capacity];
 }
 template <> struct SerializationTraits<Item> : UserSerTraits<Item, int, int> {};
 
