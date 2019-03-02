@@ -1,13 +1,23 @@
-#include <functional>
-#include <vector>
 #include "test_framework/generic_test.h"
 #include "test_framework/random_sequence_checker.h"
 #include "test_framework/timed_executor.h"
+#include <functional>
+#include <vector>
 using std::bind;
+using std::swap;
 using std::vector;
+
 vector<int> ComputeRandomPermutation(int n) {
-  // TODO - you fill in here.
-  return {};
+  vector<int> res;
+  for (int i = 0; i < n; i++) {
+    res.push_back(i);
+  }
+  for (int i = 0; i < res.size() - 1; i++) {
+    int remainSz = res.size() - i;
+    int tgrIndex = i + rand() % remainSz;
+    swap(res[i], res[tgrIndex]);
+  }
+  return res;
 }
 int Factorial(int n) { return n <= 1 ? 1 : n * Factorial(n - 1); }
 
@@ -27,7 +37,7 @@ int PermutationIndex(vector<int> perm) {
   return idx;
 }
 
-bool ComputeRandomPermutationRunner(TimedExecutor& executor, int n) {
+bool ComputeRandomPermutationRunner(TimedExecutor &executor, int n) {
   vector<vector<int>> results;
 
   executor.Run([&] {
@@ -37,18 +47,18 @@ bool ComputeRandomPermutationRunner(TimedExecutor& executor, int n) {
   });
 
   vector<int> sequence;
-  for (const vector<int>& result : results) {
+  for (const vector<int> &result : results) {
     sequence.emplace_back(PermutationIndex(result));
   }
   return CheckSequenceIsUniformlyRandom(sequence, Factorial(n), 0.01);
 }
 
-void ComputeRandomPermutationWrapper(TimedExecutor& executor, int n) {
+void ComputeRandomPermutationWrapper(TimedExecutor &executor, int n) {
   RunFuncWithRetries(
       std::bind(ComputeRandomPermutationRunner, std::ref(executor), n));
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"executor", "n"};
   return GenericTestMain(
