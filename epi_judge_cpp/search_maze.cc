@@ -1,34 +1,83 @@
-#include <istream>
-#include <string>
-#include <vector>
 #include "test_framework/generic_test.h"
 #include "test_framework/serialization_traits.h"
 #include "test_framework/test_failure.h"
 #include "test_framework/timed_executor.h"
+#include <istream>
+#include <string>
+#include <vector>
 using std::vector;
 typedef enum { kWhite, kBlack } Color;
 struct Coordinate {
-  bool operator==(const Coordinate& that) const {
+  bool operator==(const Coordinate &that) const {
     return x == that.x && y == that.y;
   }
-
   int x, y;
 };
-vector<Coordinate> SearchMaze(vector<vector<Color>> maze, const Coordinate& s,
-                              const Coordinate& e) {
-  // TODO - you fill in here.
-  return {};
+
+vector<Coordinate> pathBuilder;
+int m, n;
+
+// return true if found a path in builder and then freeze the builder
+// return false : need to restore builder
+bool dfs(vector<vector<Color>> &maze, const Coordinate &start,
+         const Coordinate &end) {
+  // flip to back if walked
+  if (start == end) {
+    pathBuilder.push_back(end);
+    return true;
+  } else {
+    // go from this point
+    pathBuilder.push_back(start);
+    // mark as black to prevent go back
+    maze[start.x][start.y] = kBlack;
+    // left
+    if (start.x > 0 && maze[start.x - 1][start.y] == kWhite) {
+      if (dfs(maze, {start.x - 1, start.y}, end)) {
+        return true;
+      }
+    }
+    // right
+    if (start.x < m - 1 && maze[start.x + 1][start.y] == kWhite) {
+      if (dfs(maze, {start.x + 1, start.y}, end)) {
+        return true;
+      }
+    }
+    // up
+    if (start.y > 0 && maze[start.x][start.y - 1] == kWhite) {
+      if (dfs(maze, {start.x, start.y - 1}, end)) {
+        return true;
+      }
+    }
+    // down
+    if (start.y < n - 1 && maze[start.x][start.y + 1] == kWhite) {
+      if (dfs(maze, {start.x, start.y + 1}, end)) {
+        return true;
+      }
+    }
+    // restore path since we are not found
+    pathBuilder.pop_back();
+    return false;
+  }
 }
-template <>
-struct SerializationTraits<Color> : SerializationTraits<int> {
+
+vector<Coordinate> SearchMaze(vector<vector<Color>> maze, const Coordinate &s,
+                              const Coordinate &e) {
+  pathBuilder.clear();
+  m = maze.size();
+  n = maze[0].size();
+  dfs(maze, s, e);
+  return pathBuilder;
+};
+
+template <> struct SerializationTraits<Color> : SerializationTraits<int> {
   using serialization_type = Color;
 
-  static serialization_type Parse(const std::string& str) {
+  static serialization_type Parse(const std::string &str) {
     return static_cast<serialization_type>(
         SerializationTraits<int>::Parse(str));
   }
 
-  static serialization_type JsonParse(const json_parser::Json& json_object) {
+  static serialization_type JsonParse(const json_parser::Json &json_object) {
     return static_cast<serialization_type>(
         SerializationTraits<int>::JsonParse(json_object));
   }
@@ -36,15 +85,15 @@ struct SerializationTraits<Color> : SerializationTraits<int> {
 
 template <>
 struct SerializationTraits<Coordinate> : UserSerTraits<Coordinate, int, int> {
-  static std::vector<std::string> GetMetricNames(const std::string& arg_name) {
+  static std::vector<std::string> GetMetricNames(const std::string &arg_name) {
     return {};
   }
 
-  static std::vector<int> GetMetrics(const Coordinate& x) { return {}; }
+  static std::vector<int> GetMetrics(const Coordinate &x) { return {}; }
 };
 
-bool PathElementIsFeasible(const vector<vector<Color>>& maze,
-                           const Coordinate& prev, const Coordinate& cur) {
+bool PathElementIsFeasible(const vector<vector<Color>> &maze,
+                           const Coordinate &prev, const Coordinate &cur) {
   if (!(0 <= cur.x && cur.x < maze.size() && 0 <= cur.y &&
         cur.y < maze[cur.x].size() && maze[cur.x][cur.y] == kWhite)) {
     return false;
@@ -55,9 +104,9 @@ bool PathElementIsFeasible(const vector<vector<Color>>& maze,
          cur == Coordinate{prev.x, prev.y - 1};
 }
 
-bool SearchMazeWrapper(TimedExecutor& executor,
-                       const vector<vector<Color>>& maze, const Coordinate& s,
-                       const Coordinate& e) {
+bool SearchMazeWrapper(TimedExecutor &executor,
+                       const vector<vector<Color>> &maze, const Coordinate &s,
+                       const Coordinate &e) {
   vector<vector<Color>> copy = maze;
 
   auto path = executor.Run([&] { return SearchMaze(copy, s, e); });
@@ -79,7 +128,7 @@ bool SearchMazeWrapper(TimedExecutor& executor,
   return true;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"executor", "maze", "s", "e"};
   return GenericTestMain(args, "search_maze.cc", "search_maze.tsv",
