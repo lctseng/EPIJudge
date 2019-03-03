@@ -12,30 +12,21 @@ template <typename T> struct BinaryTreeNode {
   explicit BinaryTreeNode(T data) : data(data){};
 };
 
-void ConstructRightSibling(BinaryTreeNode<int> *tree) {
-  // level-by-level, use next field to reduce space
-  // current: current traversal
-  // buildHead: dummy head for building
-  // buildCurrent: lastest node to be updated
+void FillLowerLevel(BinaryTreeNode<int> *tree) {
   auto current = tree;
-  BinaryTreeNode<int> buildHead(0);
-  auto buildCurrent = &buildHead;
   while (current) {
-    if (current->left) {
-      buildCurrent->next = current->left.get();
-      current->left->next = current->right.get();
-      buildCurrent = current->right.get();
-    }
-    // advance current
+    current->left->next = current->right.get();
     if (current->next) {
-      current = current->next;
-    } else {
-      // switch to next level
-      current = buildHead.next;
-      // BE CAREFUL! reset
-      buildHead.next = nullptr;
-      buildCurrent = &buildHead;
+      current->right->next = current->next->left.get();
     }
+    current = current->next;
+  }
+}
+
+void ConstructRightSibling(BinaryTreeNode<int> *tree) {
+  while (tree && tree->left) {
+    FillLowerLevel(tree);
+    tree = tree->left.get();
   }
 }
 template <>
