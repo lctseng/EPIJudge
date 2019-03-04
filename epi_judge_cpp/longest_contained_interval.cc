@@ -6,18 +6,29 @@ using std::vector;
 
 int LongestContainedRange(const vector<int> &A) {
   unordered_set<int> nums(A.begin(), A.end());
-  int maxStreak = 1;
+  int maxStreak = 0; // only 0 for empty array
   for (int n : A) {
-    // check n is a head: no n-1 exists
-    if (!nums.count(n - 1)) {
-      // count current streak
-      int y = 1;
-      while (nums.count(n + y)) {
-        y++;
-      }
-      if (y > maxStreak)
-        maxStreak = y;
+    auto currentIt = nums.find(n);
+    if (currentIt == nums.end())
+      continue;
+    nums.erase(currentIt); // prevent future searching
+    int currentStreak = 1;
+    // go up
+    int currentNum = n;
+    auto it = nums.begin();
+    while ((it = nums.find(++currentNum)) != nums.end()) {
+      currentStreak++;
+      nums.erase(it);
     }
+    // go down
+    currentNum = n;
+    while ((it = nums.find(--currentNum)) != nums.end()) {
+      currentStreak++;
+      nums.erase(it);
+    }
+    // update
+    if (currentStreak > maxStreak)
+      maxStreak = currentStreak;
   }
   return maxStreak;
 }
