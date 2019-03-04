@@ -13,14 +13,33 @@ RebuildBSTFromPreorderHelper(const vector<int> &preorder_sequence, int begin,
   } else {
     unique_ptr<BstNode<int>> root{new BstNode<int>(preorder_sequence[begin])};
     // find split point
-    int mid;
-    for (mid = begin + 1; mid < end; mid++) {
-      if (preorder_sequence[mid] > preorder_sequence[begin])
+    // using binary search
+    int pivot = -1;
+    int low = begin + 1, high = end;
+    while (low < high) {
+      int mid = low + (high - low) / 2;
+      if (preorder_sequence[mid] > preorder_sequence[begin] &&
+          (mid == begin + 1 ||
+           preorder_sequence[mid - 1] < preorder_sequence[begin])) {
+        pivot = mid;
+        // BE CAREFUL : binary search terminate needs exit loop
         break;
+      } else if (preorder_sequence[mid] < preorder_sequence[begin]) {
+        // go right
+        low = mid + 1;
+      } else {
+        // go left
+        high = mid;
+      }
     }
+    // BE CAREFUL : binary search out-of-bound
+    if (pivot < 0)
+      pivot = low;
+
+    // build child
     root->left =
-        RebuildBSTFromPreorderHelper(preorder_sequence, begin + 1, mid);
-    root->right = RebuildBSTFromPreorderHelper(preorder_sequence, mid, end);
+        RebuildBSTFromPreorderHelper(preorder_sequence, begin + 1, pivot);
+    root->right = RebuildBSTFromPreorderHelper(preorder_sequence, pivot, end);
     return move(root);
   }
 }
