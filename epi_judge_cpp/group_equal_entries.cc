@@ -1,12 +1,14 @@
-#include <iterator>
-#include <set>
-#include <string>
-#include <vector>
 #include "test_framework/generic_test.h"
 #include "test_framework/serialization_traits.h"
 #include "test_framework/test_failure.h"
 #include "test_framework/timed_executor.h"
+#include <iterator>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <vector>
 using std::string;
+using std::unordered_map;
 using std::vector;
 
 struct Person {
@@ -14,19 +16,28 @@ struct Person {
   string name;
 };
 
-void GroupByAge(vector<Person>* people) {
-  // TODO - you fill in here.
-  return;
+void GroupByAge(vector<Person> *people) {
+  unordered_map<int, vector<Person>> ageToPersonMap;
+  for (auto &person : *people) {
+    ageToPersonMap[person.age].push_back(person);
+  }
+  // write back
+  int writeIndex = 0;
+  for (auto &agePersonPair : ageToPersonMap) {
+    for (auto &person : agePersonPair.second) {
+      people->at(writeIndex++) = person;
+    }
+  }
 }
 template <>
 struct SerializationTraits<Person> : UserSerTraits<Person, int, string> {};
 
-void GroupByAgeWrapper(TimedExecutor& executor, vector<Person>& people) {
+void GroupByAgeWrapper(TimedExecutor &executor, vector<Person> &people) {
   if (people.empty()) {
     return;
   }
   std::multiset<Person, std::function<bool(Person, Person)>> values(
-      begin(people), end(people), [](const Person& a, const Person& b) {
+      begin(people), end(people), [](const Person &a, const Person &b) {
         return a.age == b.age ? a.name < b.name : a.age < b.age;
       });
 
@@ -37,7 +48,7 @@ void GroupByAgeWrapper(TimedExecutor& executor, vector<Person>& people) {
   }
   std::set<int> ages;
   int last_age = people[0].age;
-  for (auto& x : people) {
+  for (auto &x : people) {
     if (ages.count(x.age) != 0) {
       throw TestFailure("Entries are not grouped by age");
     }
@@ -53,7 +64,7 @@ void GroupByAgeWrapper(TimedExecutor& executor, vector<Person>& people) {
   }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"executor", "people"};
   return GenericTestMain(args, "group_equal_entries.cc",
