@@ -10,46 +10,32 @@ struct DuplicateAndMissing {
 
 DuplicateAndMissing FindDuplicateMissing(const vector<int> &A) {
   int v = 0;
-  int curSum = 0;
   int n = A.size();
-  for (int val : A) {
-    v ^= val;
-    curSum += val;
-  }
   for (int i = 0; i < n; i++) {
-    v ^= i;
+    v ^= i ^ A[i];
   }
   // v is now D xor M
   int lowbit = v & (-v);
-  // group into 2
-  int xor0 = 0, xor1 = 0;
+  // group into 2. either miss or dup has that bit!
+  int candidate = 0;
   for (int i = 0; i < n; i++) {
     if (i & lowbit) {
-      xor1 ^= i;
-    } else {
-      xor0 ^= i;
+      candidate ^= i;
+    }
+    if (A[i] & lowbit) {
+      candidate ^= A[i];
     }
   }
-  for (int i : A) {
-    if (i & lowbit) {
-      xor1 ^= i;
-    } else {
-      xor0 ^= i;
+  // now, candidate may be miss or dup
+  // search!
+  for (int dup : A) {
+    if (dup == candidate) {
+      // exist in A, candidate is dup
+      return {candidate, v ^ candidate};
     }
   }
-  // if D has that bit, xor1 is D, xor0 is M
-  // if D has no bit, xor0 is D, xor1 is M
-  if (xor1 < xor0) {
-    swap(xor1, xor0);
-  }
-  int targetSum = ((n - 1) * n) >> 1;
-  if (targetSum > curSum) {
-    // D < M
-    return {xor0, xor1};
-  } else {
-    // D > M
-    return {xor1, xor0};
-  }
+  // candidate is miss
+  return {v ^ candidate, candidate};
 }
 template <>
 struct SerializationTraits<DuplicateAndMissing>
