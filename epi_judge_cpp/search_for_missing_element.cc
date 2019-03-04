@@ -1,31 +1,71 @@
-#include <vector>
 #include "test_framework/generic_test.h"
 #include "test_framework/serialization_traits.h"
+#include <vector>
+using std::swap;
 using std::vector;
 
 struct DuplicateAndMissing {
   int duplicate, missing;
 };
 
-DuplicateAndMissing FindDuplicateMissing(const vector<int>& A) {
-  // TODO - you fill in here.
-  return {0, 0};
+DuplicateAndMissing FindDuplicateMissing(const vector<int> &A) {
+  int v = 0;
+  int curSum = 0;
+  int n = A.size();
+  for (int val : A) {
+    v ^= val;
+    curSum += val;
+  }
+  for (int i = 0; i < n; i++) {
+    v ^= i;
+  }
+  // v is now D xor M
+  int lowbit = v & (-v);
+  // group into 2
+  int xor0 = 0, xor1 = 0;
+  for (int i = 0; i < n; i++) {
+    if (i & lowbit) {
+      xor1 ^= i;
+    } else {
+      xor0 ^= i;
+    }
+  }
+  for (int i : A) {
+    if (i & lowbit) {
+      xor1 ^= i;
+    } else {
+      xor0 ^= i;
+    }
+  }
+  // if D has that bit, xor1 is D, xor0 is M
+  // if D has no bit, xor0 is D, xor1 is M
+  if (xor1 < xor0) {
+    swap(xor1, xor0);
+  }
+  int targetSum = ((n - 1) * n) >> 1;
+  if (targetSum > curSum) {
+    // D < M
+    return {xor0, xor1};
+  } else {
+    // D > M
+    return {xor1, xor0};
+  }
 }
 template <>
 struct SerializationTraits<DuplicateAndMissing>
     : UserSerTraits<DuplicateAndMissing, int, int> {};
 
-bool operator==(const DuplicateAndMissing& lhs,
-                const DuplicateAndMissing& rhs) {
+bool operator==(const DuplicateAndMissing &lhs,
+                const DuplicateAndMissing &rhs) {
   return std::tie(lhs.duplicate, lhs.missing) ==
          std::tie(rhs.duplicate, rhs.missing);
 }
 
-std::ostream& operator<<(std::ostream& out, const DuplicateAndMissing& x) {
+std::ostream &operator<<(std::ostream &out, const DuplicateAndMissing &x) {
   return out << "duplicate: " << x.duplicate << ", missing: " << x.missing;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"A"};
   return GenericTestMain(
