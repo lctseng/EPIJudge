@@ -27,40 +27,42 @@ FindSmallestSubarrayCoveringSet(const vector<string> &paragraph,
   if (keywords.empty())
     return {0, 0};
   unordered_map<string, int> countMap;
+  for (auto &word : keywords) {
+    countMap[word]++;
+  }
   int i = 0, minI = 0, minDistance = paragraph.size(), j = 0;
+  int remainingToCover = keywords.size();
   while (i < paragraph.size()) {
-    while (j < paragraph.size() && countMap.size() < keywords.size()) {
+    while (j < paragraph.size() && remainingToCover > 0) {
       if (keywords.count(paragraph[j])) {
-        // this is what we expect
-        countMap[paragraph[j]]++;
+        auto &currentCount = countMap[paragraph[j]];
+        if (--currentCount >= 0) {
+          --remainingToCover;
+        }
       }
       j++;
     }
+    if (remainingToCover > 0)
+      break;
     // size match, we try shrink i
     while (i < j) {
       if (keywords.count(paragraph[i])) {
         auto &currentCount = countMap[paragraph[i]];
-        if (currentCount > 1) {
-          countMap[paragraph[i]] -= 1;
-        } else {
-          // we only have 1 this word, cannot advance anymore
+        if (++currentCount > 0) {
+          remainingToCover++;
           break;
         }
-      } else {
-        // this word is not important at all
       }
       i++;
     }
     // BE CAREFUL!
     // out-of-range i (i == j == size() - 1)
-    if (countMap.size() == keywords.size()) {
+    if (i < paragraph.size()) {
       int currentD = j - i;
       if (currentD < minDistance) {
         minI = i;
         minDistance = currentD;
       }
-      // force shrink I
-      countMap.erase(paragraph[i]);
     }
     i++;
   }
