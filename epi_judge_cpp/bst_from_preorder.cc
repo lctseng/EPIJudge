@@ -5,49 +5,30 @@ using std::move;
 using std::unique_ptr;
 using std::vector;
 
+// parentIndex: cannot consume value larger than that with parentIndex
 unique_ptr<BstNode<int>>
-RebuildBSTFromPreorderHelper(const vector<int> &preorder_sequence, int begin,
-                             int end) {
-  if (begin >= end) {
+RebuildBSTFromPreorderHelper(const vector<int> &preorder_sequence,
+                             int parentIndex, int &index) {
+  if (index >= preorder_sequence.size() ||
+      (parentIndex >= 0 &&
+       preorder_sequence[parentIndex] < preorder_sequence[index])) {
     return nullptr;
   } else {
-    unique_ptr<BstNode<int>> root{new BstNode<int>(preorder_sequence[begin])};
-    // find split point
-    // using binary search
-    int pivot = -1;
-    int low = begin + 1, high = end;
-    while (low < high) {
-      int mid = low + (high - low) / 2;
-      if (preorder_sequence[mid] > preorder_sequence[begin] &&
-          (mid == begin + 1 ||
-           preorder_sequence[mid - 1] < preorder_sequence[begin])) {
-        pivot = mid;
-        // BE CAREFUL : binary search terminate needs exit loop
-        break;
-      } else if (preorder_sequence[mid] < preorder_sequence[begin]) {
-        // go right
-        low = mid + 1;
-      } else {
-        // go left
-        high = mid;
-      }
-    }
-    // BE CAREFUL : binary search out-of-bound
-    if (pivot < 0)
-      pivot = low;
-
-    // build child
+    int currentIndex = index++;
+    unique_ptr<BstNode<int>> root{
+        new BstNode<int>(preorder_sequence[currentIndex])};
     root->left =
-        RebuildBSTFromPreorderHelper(preorder_sequence, begin + 1, pivot);
-    root->right = RebuildBSTFromPreorderHelper(preorder_sequence, pivot, end);
+        RebuildBSTFromPreorderHelper(preorder_sequence, currentIndex, index);
+    root->right =
+        RebuildBSTFromPreorderHelper(preorder_sequence, parentIndex, index);
     return move(root);
   }
 }
 
 unique_ptr<BstNode<int>>
 RebuildBSTFromPreorder(const vector<int> &preorder_sequence) {
-  return RebuildBSTFromPreorderHelper(preorder_sequence, 0,
-                                      preorder_sequence.size());
+  int nextIndex = 0;
+  return RebuildBSTFromPreorderHelper(preorder_sequence, -1, nextIndex);
 }
 
 int main(int argc, char *argv[]) {
