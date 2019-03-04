@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 using std::string;
+using std::swap;
 using std::unordered_map;
 using std::vector;
 
@@ -17,15 +18,28 @@ struct Person {
 };
 
 void GroupByAge(vector<Person> *people) {
-  unordered_map<int, vector<Person>> ageToPersonMap;
+  unordered_map<int, int> ageCount;
   for (auto &person : *people) {
-    ageToPersonMap[person.age].push_back(person);
+    ageCount[person.age]++;
   }
-  // write back
-  int writeIndex = 0;
-  for (auto &agePersonPair : ageToPersonMap) {
-    for (auto &person : agePersonPair.second) {
-      people->at(writeIndex++) = person;
+  // compute end-offset by accumulating
+  unordered_map<int, int> ageOffset;
+  int currentOffset = 0;
+  for (auto it = ageCount.begin(); it != ageCount.end(); ++it) {
+    ageOffset[it->first] = currentOffset;
+    currentOffset += it->second;
+  }
+  // update in-place
+  while (ageOffset.size()) {
+    // move the person occupied at from to its correct position
+    auto from = ageOffset.begin();
+    auto personAgeToMove = (*people)[from->second].age;
+    auto &toIndex = ageOffset[personAgeToMove];
+    swap(people->at(from->second), people->at(toIndex));
+    if (--ageCount[personAgeToMove] > 0) {
+      ++toIndex;
+    } else {
+      ageOffset.erase(personAgeToMove);
     }
   }
 }
