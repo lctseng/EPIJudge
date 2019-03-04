@@ -8,11 +8,22 @@ struct MinMax {
 
 MinMax FindMinMax(const vector<int> &A) {
   int small = A[0], large = A[0];
-  for (int i = 1; i < A.size(); i++) {
-    if (A[i] > large) {
-      large = A[i];
-    } else if (A[i] < small) {
-      small = A[i];
+  int sz = A.size();
+  int i = 0;
+  if (sz & 1) {
+    i++;
+  }
+  for (; i < sz; i += 2) {
+    if (A[i] < A[i + 1]) {
+      if (A[i + 1] > large)
+        large = A[i + 1];
+      if (A[i] < small)
+        small = A[i];
+    } else {
+      if (A[i] > large)
+        large = A[i];
+      if (A[i + 1] < small)
+        small = A[i + 1];
     }
   }
   return {small, large};
