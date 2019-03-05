@@ -24,41 +24,45 @@ void AdvanceIndex(int &i, int &j) {
 }
 
 bool SolveSudokuHelper(vector<vector<int>> &partial_assignment, int i, int j) {
-  // ending check?
-  if (i >= 9)
-    return true;
-  else {
-    // i, j in range
-    int nextI = i, nextJ = j;
+  // i, j in range
+  int nextI = i, nextJ = j;
+  AdvanceIndex(nextI, nextJ);
+  // skip all filled entry
+  while (i < 9 && partial_assignment[i][j] > 0) {
+    i = nextI;
+    j = nextJ;
     AdvanceIndex(nextI, nextJ);
-    // only process the block is blank
-    if (partial_assignment[i][j] == 0) {
-      // pick a valid value for this block
-      for (int n = 1; n <= 9; n++) {
-        if (!rowUsed[i][n] && !colUsed[j][n] &&
-            !blockUsed[BLOCK_INDEX(i, j)][n]) {
-          // use
-          ++rowUsed[i][n];
-          ++colUsed[j][n];
-          ++blockUsed[BLOCK_INDEX(i, j)][n];
-          partial_assignment[i][j] = n;
-          // forward
-          if (SolveSudokuHelper(partial_assignment, nextI, nextJ)) {
-            // force return if solved
-            return true;
-          }
-          // restore
-          --rowUsed[i][n];
-          --colUsed[j][n];
-          --blockUsed[BLOCK_INDEX(i, j)][n];
+  }
+  if (i >= 9) {
+    return true;
+  }
+  // this block is blank
+  if (partial_assignment[i][j] == 0) {
+    // pick a valid value for this block
+    for (int n = 1; n <= 9; n++) {
+      if (!rowUsed[i][n] && !colUsed[j][n] &&
+          !blockUsed[BLOCK_INDEX(i, j)][n]) {
+        // use
+        ++rowUsed[i][n];
+        ++colUsed[j][n];
+        ++blockUsed[BLOCK_INDEX(i, j)][n];
+        partial_assignment[i][j] = n;
+        // forward
+        if (SolveSudokuHelper(partial_assignment, nextI, nextJ)) {
+          // force return if solved
+          return true;
         }
+        // restore
+        --rowUsed[i][n];
+        --colUsed[j][n];
+        --blockUsed[BLOCK_INDEX(i, j)][n];
       }
-      partial_assignment[i][j] = 0;
-      return false;
-    } else {
-      // just go next
-      return SolveSudokuHelper(partial_assignment, nextI, nextJ);
     }
+    partial_assignment[i][j] = 0;
+    return false;
+  } else {
+    // just go next
+    return SolveSudokuHelper(partial_assignment, nextI, nextJ);
   }
 }
 
