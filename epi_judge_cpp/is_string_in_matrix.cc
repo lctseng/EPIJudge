@@ -1,71 +1,78 @@
 #include "test_framework/generic_test.h"
-#include <unordered_set>
+#include <tuple>
+#include <unordered_map>
 #include <vector>
+using std::get;
 using std::hash;
 using std::size;
-using std::unordered_set;
+using std::tuple;
+using std::unordered_map;
 using std::vector;
 
-struct Entry {
-  int i, j;
-};
+typedef tuple<int, int, int> Entry;
 
-struct hashFunc {
+template <> struct hash<Entry> {
   size_t operator()(const Entry &ent) const {
-    return (hash<int>{}(ent.i) << 1) ^ hash<int>{}(ent.j);
+    return (hash<int>{}(get<0>(ent)) << 2) ^ (hash<int>{}(get<1>(ent)) << 1) ^
+           (hash<int>{}(get<2>(ent)));
   }
 };
 
-bool operator==(const Entry &a, const Entry &b) {
-  return a.i == b.i && a.j == b.j;
+int m, n;
+
+bool IsPatternContainedInGridHelper(unordered_map<Entry, bool> &cache,
+                                    const vector<vector<int>> &grid,
+                                    const vector<int> &pattern, int i, int j,
+                                    int index) {
+  // grid range check
+  if (i < 0 || i >= m || j < 0 || j >= n)
+    return false;
+  // index is gauranteed to in the range
+  if (pattern[index] != grid[i][j])
+    return false;
+  auto cacheIt = cache.find({i, j, index});
+  if (cacheIt != cache.end())
+    return cacheIt->second;
+  // this block matched, search 4-dir
+  int nextIndex = index + 1;
+  if (nextIndex < size(pattern)) {
+    // need recursive search. cache the result
+    return cache[{i, j, index}] =
+               IsPatternContainedInGridHelper(cache, grid, pattern, i - 1, j,
+                                              nextIndex) ||
+               IsPatternContainedInGridHelper(cache, grid, pattern, i + 1, j,
+                                              nextIndex) ||
+               IsPatternContainedInGridHelper(cache, grid, pattern, i, j - 1,
+                                              nextIndex) ||
+               IsPatternContainedInGridHelper(cache, grid, pattern, i, j + 1,
+                                              nextIndex);
+  } else {
+    // next index not exist and we have matched current entry
+    // Yay!
+    return true;
+  }
 }
 
 bool IsPatternContainedInGrid(const vector<vector<int>> &grid,
                               const vector<int> &pattern) {
-  int m = size(grid);
+  m = size(grid);
   if (pattern.empty())
     return true;
   if (!m)
     return false;
-  int n = size(grid[0]);
+  n = size(grid[0]);
   if (!n)
     return false;
-  unordered_set<Entry, hashFunc> current;
-  // find all start point
+  unordered_map<Entry, bool> cache;
+  // try every start point
   for (int i = 0; i < m; i++) {
     for (int j = 0; j < n; j++) {
-      if (grid[i][j] == pattern[0]) {
-        current.insert({i, j});
+      if (IsPatternContainedInGridHelper(cache, grid, pattern, i, j, 0)) {
+        return true;
       }
     }
   }
-  // printf("num of init entry: %lu\n", q.size());
-  // extend size(pattern) - 1 times. if still not empty, we are done
-  int patternSize = size(pattern);
-  for (int index = 1; index < patternSize; index++) {
-    if (current.empty())
-      return false;
-    // extend every element currently
-    unordered_set<Entry, hashFunc> next;
-    for (auto &ent : current) {
-      int i = ent.i, j = ent.j;
-      // check exist pattern[index] in 4 dir?
-      if (i > 0 && grid[i - 1][j] == pattern[index]) {
-        next.insert({i - 1, j});
-      }
-      if (i < m - 1 && grid[i + 1][j] == pattern[index]) {
-        next.insert({i + 1, j});
-      }
-      if (j > 0 && grid[i][j - 1] == pattern[index]) {
-        next.insert({i, j - 1});
-      }
-      if (j < n - 1 && grid[i][j + 1] == pattern[index]) {
-        next.insert({i, j + 1});
-      }
-    }
-    current = std::move(next);
-  }
-  return !current.empty();
+  return false;
 }
 
 int main(int argc, char *argv[]) {
