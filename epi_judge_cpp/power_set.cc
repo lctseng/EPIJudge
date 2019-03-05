@@ -5,11 +5,12 @@ using std::vector;
 vector<vector<int>> GeneratePowerSet(const vector<int> &input_set) {
   vector<vector<int>> ans;
   ans.push_back({});
+  // consider every number to use
   for (int n : input_set) {
-    // consider using this number
-    int prevSize = ans.size();
-    for (int j = 0; j < prevSize; j++) {
-      ans.push_back(ans[j]);
+    // use this number
+    int curSize = ans.size();
+    for (int i = 0; i < curSize; i++) {
+      ans.push_back(ans[i]);
       ans.back().push_back(n);
     }
   }
