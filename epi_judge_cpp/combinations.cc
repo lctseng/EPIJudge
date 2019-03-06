@@ -1,29 +1,33 @@
 #include "test_framework/generic_test.h"
 #include <vector>
+using std::move;
 using std::vector;
 
-//
-void CombinationsHelper(vector<vector<int>> &res, vector<int> &builder, int n,
-                        int k, int currentN) {
-  if (k > 0 && currentN > n)
+vector<int> builder;
+vector<vector<int>> res;
+
+void CombinationsHelper(int n, int k) {
+  if (n < k)
     return;
   if (k == 0) {
     res.push_back(builder);
   } else {
-    // use current N
-    builder.push_back(currentN);
-    CombinationsHelper(res, builder, n, k - 1, currentN + 1);
+    // use n
+    builder.push_back(n);
+    CombinationsHelper(n - 1, k - 1);
     builder.pop_back();
-    // dont use current N
-    CombinationsHelper(res, builder, n, k, currentN + 1);
+    // not use n
+    CombinationsHelper(n - 1, k);
   }
 }
 
 vector<vector<int>> Combinations(int n, int k) {
-  vector<vector<int>> res;
-  vector<int> builder;
-  CombinationsHelper(res, builder, n, k, 1);
-  return res;
+  if (k == 0)
+    return {{}};
+  res.clear();
+  builder.clear();
+  CombinationsHelper(n, k);
+  return move(res);
 }
 
 int main(int argc, char *argv[]) {
