@@ -34,10 +34,40 @@ GraphVertex *CloneGraphHelper(GraphVertex *graph) {
   return newNode;
 }
 
-GraphVertex *CloneGraph(GraphVertex *graph) {
+GraphVertex *CloneGraphDFS(GraphVertex *graph) {
   clonedNodes.clear();
   return CloneGraphHelper(graph);
 }
+
+GraphVertex *CloneGraphBFS(GraphVertex *graph) {
+  clonedNodes.clear();
+  queue<GraphVertex *> todos;
+  auto *newGraph = new GraphVertex{graph->label};
+  clonedNodes[graph->label] = newGraph;
+  todos.push(graph);
+  while (todos.size()) {
+    auto *currentOld = todos.front();
+    auto *currrentNew = clonedNodes[currentOld->label];
+    todos.pop();
+    // clone  edge
+    for (auto *oldNextNode : currentOld->edges) {
+      GraphVertex *clonedNext = nullptr;
+      auto it = clonedNodes.find(oldNextNode->label);
+      if (it == clonedNodes.end()) {
+        clonedNext = new GraphVertex{oldNextNode->label};
+        // BE CAREFUL: update the node map, so that when pop from queue, we
+        // always have mapped new nodes
+        clonedNodes[oldNextNode->label] = clonedNext;
+        todos.push(oldNextNode);
+      } else {
+        clonedNext = it->second;
+      }
+      currrentNew->edges.push_back(clonedNext);
+    }
+  }
+  return newGraph;
+}
+
 vector<int> CopyLabels(const vector<GraphVertex *> &edges) {
   vector<int> labels;
   transform(begin(edges), end(edges), back_inserter(labels),
@@ -103,7 +133,7 @@ void CloneGraphTest(int k, const vector<Edge> &edges) {
     }
     graph[e.from].edges.push_back(&graph[e.to]);
   }
-  GraphVertex *result = CloneGraph(&graph[0]);
+  GraphVertex *result = CloneGraphBFS(&graph[0]);
   CheckGraph(result, graph);
 }
 
