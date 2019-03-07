@@ -2,22 +2,21 @@
 #include "test_framework/serialization_traits.h"
 #include "test_framework/timed_executor.h"
 #include <stdexcept>
-#include <unordered_set>
 #include <vector>
-using std::unordered_set;
 using std::vector;
 
 struct GraphVertex {
   vector<GraphVertex *> edges;
+  bool visited = false;
 };
 
-bool dfs(unordered_set<GraphVertex *> &seen, GraphVertex *current) {
+bool dfs(GraphVertex *current) {
   if (!current)
     return false;
-  seen.insert(current);
+  current->visited = true;
   // explore me
   for (auto *nextNode : current->edges) {
-    if (seen.count(nextNode) || dfs(seen, nextNode))
+    if (nextNode->visited || dfs(nextNode))
       return true;
   }
   return false;
@@ -26,9 +25,8 @@ bool dfs(unordered_set<GraphVertex *> &seen, GraphVertex *current) {
 bool IsDeadlocked(vector<GraphVertex> *graph) {
   // is cycle exists?
   // for every start point
-  unordered_set<GraphVertex *> seen;
   for (auto &node : *graph) {
-    if (!seen.count(&node) && dfs(seen, &node))
+    if (!node.visited && dfs(&node))
       return true;
   }
   return false;
