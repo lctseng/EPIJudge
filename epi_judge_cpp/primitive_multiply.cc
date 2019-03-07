@@ -6,26 +6,29 @@ unsigned long long Add(unsigned long long x, unsigned long long y) {
   unsigned long long res = 0;
   unsigned long long carryin = 0;
   int mask = 1;
-  for (int i = 0; i < BIT_SIZE; i++) {
+  unsigned long long ored = x | y;
+  while (ored) {
     auto xk = (x & mask);
     auto yk = (y & mask);
     res |= xk ^ yk ^ carryin;
     // next carry in
     carryin = ((xk & yk) | (carryin & yk) | (xk & carryin)) << 1;
+    // cancel this bit
     mask <<= 1;
+    ored >>= 1;
   }
-  return res;
+  return res | carryin;
 }
 
 unsigned long long Multiply(unsigned long long x, unsigned long long y) {
   // like elementrary school multiplication
   unsigned long long res = 0;
-  int mask = 1;
-  for (int i = 0; i < BIT_SIZE; i++) {
-    if (y & mask) {
-      res = Add(res, x << i);
+  while (y) {
+    if (y & 1) {
+      res = Add(res, x);
     }
-    mask <<= 1;
+    y >>= 1;
+    x <<= 1;
   }
   return res;
 }
