@@ -3,6 +3,35 @@
 using std::sort;
 using std::vector;
 
+double FindSalaryCapBinarySearch(int target_payroll,
+                                 vector<int> current_salaries) {
+  sort(current_salaries.begin(), current_salaries.end());
+  vector<int> prefixSum(1, 0);
+  for (int val : current_salaries) {
+    prefixSum.push_back(prefixSum.back() + val);
+  }
+  // perform binary search
+  int begin = 0, end = current_salaries.size();
+  while (begin < end) {
+    // try use this?
+    int mid = begin + (end - begin) / 2;
+    double remainBudge = target_payroll - prefixSum[mid];
+    double divided = remainBudge / (current_salaries.size() - mid);
+    if (divided <= current_salaries[mid] &&
+        (mid == 0 || divided > current_salaries[mid - 1])) {
+      return divided;
+    } else if (divided > current_salaries[mid]) {
+      // go right
+      begin = mid + 1;
+    } else {
+      // go left
+      end = mid;
+    }
+  }
+  // not found
+  return -1;
+}
+
 double FindSalaryCap(int target_payroll, vector<int> current_salaries) {
   sort(current_salaries.begin(), current_salaries.end());
   double remainBudge = target_payroll;
