@@ -1,28 +1,47 @@
-#include <stdexcept>
-#include <vector>
 #include "test_framework/generic_test.h"
 #include "test_framework/serialization_traits.h"
 #include "test_framework/timed_executor.h"
+#include <stdexcept>
+#include <unordered_set>
+#include <vector>
+using std::unordered_set;
 using std::vector;
 
 struct GraphVertex {
-  vector<GraphVertex*> edges;
+  vector<GraphVertex *> edges;
 };
 
-bool IsDeadlocked(vector<GraphVertex>* graph) {
-  // TODO - you fill in here.
-  return true;
+bool dfs(unordered_set<GraphVertex *> &seen, GraphVertex *current) {
+  if (!current)
+    return false;
+  seen.insert(current);
+  // explore me
+  for (auto *nextNode : current->edges) {
+    if (seen.count(nextNode) || dfs(seen, nextNode))
+      return true;
+  }
+  return false;
+}
+
+bool IsDeadlocked(vector<GraphVertex> *graph) {
+  // is cycle exists?
+  // for every start point
+  unordered_set<GraphVertex *> seen;
+  for (auto &node : *graph) {
+    if (!seen.count(&node) && dfs(seen, &node))
+      return true;
+  }
+  return false;
 }
 struct Edge {
   int from;
   int to;
 };
 
-template <>
-struct SerializationTraits<Edge> : UserSerTraits<Edge, int, int> {};
+template <> struct SerializationTraits<Edge> : UserSerTraits<Edge, int, int> {};
 
-bool HasCycleWrapper(TimedExecutor& executor, int num_nodes,
-                     const vector<Edge>& edges) {
+bool HasCycleWrapper(TimedExecutor &executor, int num_nodes,
+                     const vector<Edge> &edges) {
   vector<GraphVertex> graph;
   if (num_nodes <= 0) {
     throw std::runtime_error("Invalid num_nodes value");
@@ -33,7 +52,7 @@ bool HasCycleWrapper(TimedExecutor& executor, int num_nodes,
     graph.push_back(GraphVertex{});
   }
 
-  for (const Edge& e : edges) {
+  for (const Edge &e : edges) {
     if (e.from < 0 || e.from >= num_nodes || e.to < 0 || e.to >= num_nodes) {
       throw std::runtime_error("Invalid vertex index");
     }
@@ -43,7 +62,7 @@ bool HasCycleWrapper(TimedExecutor& executor, int num_nodes,
   return executor.Run([&] { return IsDeadlocked(&graph); });
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"executor", "num_nodes", "edges"};
   return GenericTestMain(args, "deadlock_detection.cc",
