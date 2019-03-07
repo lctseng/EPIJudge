@@ -1,9 +1,9 @@
-#include <functional>
-#include <random>
-#include <vector>
 #include "test_framework/generic_test.h"
 #include "test_framework/random_sequence_checker.h"
 #include "test_framework/timed_executor.h"
+#include <functional>
+#include <random>
+#include <vector>
 using std::bind;
 using std::default_random_engine;
 using std::random_device;
@@ -15,11 +15,33 @@ int ZeroOneRandom() {
   return dis(gen);
 }
 
-int UniformRandom(int lower_bound, int upper_bound) {
-  // TODO - you fill in here.
-  return 0;
+int RandomNumWithBits(int bitControl) {
+  int res = 0;
+  while (bitControl) {
+    res = (res << 1) | ZeroOneRandom();
+    bitControl >>= 1;
+  }
+  return res;
 }
-bool UniformRandomRunner(TimedExecutor& executor, int lower_bound,
+
+int UniformRandom(int lower_bound, int upper_bound) {
+  int range = upper_bound - lower_bound;
+  // decompose range into 1,3,7,15,31,63,... etc
+  vector<int> powers;
+  int maxExp = 2;
+  while (maxExp - 1 < range) {
+    maxExp <<= 1;
+  }
+  int result = 0;
+  --maxExp;
+  while (true) {
+    int r = RandomNumWithBits(maxExp);
+    if (r <= range) {
+      return r + lower_bound;
+    }
+  }
+}
+bool UniformRandomRunner(TimedExecutor &executor, int lower_bound,
                          int upper_bound) {
   vector<int> result;
   executor.Run([&] {
@@ -34,13 +56,13 @@ bool UniformRandomRunner(TimedExecutor& executor, int lower_bound,
                                         0.01);
 }
 
-void UniformRandomWrapper(TimedExecutor& executor, int lower_bound,
+void UniformRandomWrapper(TimedExecutor &executor, int lower_bound,
                           int upper_bound) {
   RunFuncWithRetries(
       bind(UniformRandomRunner, std::ref(executor), lower_bound, upper_bound));
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"executor", "lower_bound",
                                        "upper_bound"};
