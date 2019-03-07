@@ -1,5 +1,22 @@
 #include "test_framework/generic_test.h"
+#include <vector>
+using std::min;
 using std::swap;
+using std::vector;
+
+int ComputeBinomialCoefficient(int n, int k) {
+  k = min(k, n - k);
+  vector<int> dp(k + 1, 0);
+  dp[0] = 1;
+  // dp
+  for (int i = 0; i < n; i++) {
+    for (int j = k; j >= 1; j--) {
+      // c(n, k) = c(n - 1, k) + c(n- 1, k -1)
+      dp[j] = dp[j] + dp[j - 1];
+    }
+  }
+  return dp[k];
+}
 
 int GCD(int a, int b) {
   if (a < b)
@@ -11,7 +28,7 @@ int GCD(int a, int b) {
   }
   return a;
 }
-int ComputeBinomialCoefficient(int n, int k) {
+int ComputeBinomialCoefficientFast(int n, int k) {
   int result = 1;
   int upperBegin = n - k;
   for (int lower = 1; lower <= k; lower++) {
