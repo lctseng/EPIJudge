@@ -25,6 +25,9 @@ bool dfs(GraphVertex *current) {
 bool IsDeadlocked(vector<GraphVertex> *graph) {
   // is cycle exists?
   // for every start point
+  // BE CAREFUL!
+  // dont need to reset 'seen' every time
+  // we need a O(n) not O(n^2)!!!
   for (auto &node : *graph) {
     if (!node.visited && dfs(&node))
       return true;
