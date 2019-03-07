@@ -18,7 +18,7 @@ public:
       creditMap.erase(oldIt->second);
     }
     // add new
-    auto it = creditMap.insert(make_pair(c, client_id));
+    auto it = creditMap.insert(make_pair(c - globalOffset, client_id));
     if (oldIt != clientTreeMap.end()) {
       oldIt->second = it;
     } else {
@@ -38,22 +38,12 @@ public:
   int Lookup(const string &client_id) const {
     auto hashIt = clientTreeMap.find(client_id);
     if (hashIt != clientTreeMap.end()) {
-      return hashIt->second->first;
+      return hashIt->second->first + globalOffset;
     } else {
       return -1;
     }
   }
-  void AddAll(int C) {
-    // iterate current clients
-    for (auto &data : clientTreeMap) {
-      // data: string, iterator
-      int newCredit = data.second->first + C;
-      // update tree it
-      creditMap.erase(data.second);
-      data.second = creditMap.insert(make_pair(newCredit, data.first));
-    }
-    return;
-  }
+  void AddAll(int C) { globalOffset += C; }
   string Max() const {
     if (creditMap.empty())
       return "";
@@ -61,6 +51,7 @@ public:
   }
 
 private:
+  int globalOffset = 0;
   multimap<int, string> creditMap;
   unordered_map<string, multimap<int, string>::iterator> clientTreeMap;
 };
