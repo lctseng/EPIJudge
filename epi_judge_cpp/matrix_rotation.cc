@@ -5,38 +5,17 @@ using std::vector;
 void RotateLayer(vector<vector<int>> &matrix, int start, int sideLen) {
   // inplace rotate!
   for (int j = 0; j < sideLen - 1; j++) {
-    int currentI = 0, currentJ = j;
-    // perform 4 times for each element
-    int nextI, nextJ;
-    int currentValue = matrix[currentI + start][currentJ + start];
-    for (int t = 0; t < 4; t++) {
-      // compute nextI, nextJ
-      switch (t) {
-      case 0:
-        nextI = currentJ;
-        nextJ = sideLen - 1;
-        break;
-      case 1:
-        nextI = sideLen - 1;
-        nextJ = sideLen - 1 - currentI;
-        break;
-      case 2:
-        nextI = currentJ;
-        nextJ = 0;
-        break;
-      case 3:
-        nextI = 0;
-        nextJ = sideLen - 1 - currentI;
-        break;
-      }
-      // perform move
-      int nextValue = matrix[nextI + start][nextJ + start];
-      matrix[nextI + start][nextJ + start] = currentValue;
-      // assign next to current
-      currentI = nextI;
-      currentJ = nextJ;
-      currentValue = nextValue;
-    }
+    // perform 4-way exchange
+    // be careful! all matrix access need to +start
+    // gather 4 to-go element
+    int temp1 = matrix[start][start + j];
+    int temp2 = matrix[start + j][start + sideLen - 1];
+    int temp3 = matrix[start + sideLen - 1][start + sideLen - 1 - j];
+    int temp4 = matrix[start + sideLen - 1 - j][start];
+    matrix[start + j][start + sideLen - 1] = temp1;
+    matrix[start + sideLen - 1][start + sideLen - 1 - j] = temp2;
+    matrix[start + sideLen - 1 - j][start] = temp3;
+    matrix[start][start + j] = temp4;
   }
 }
 
