@@ -5,9 +5,43 @@
 #include <memory>
 using std::shared_ptr;
 
+int Length(shared_ptr<ListNode<int>> head) {
+  int r = 0;
+  while (head) {
+    ++r;
+    head = head->next;
+  }
+  return r;
+}
+
+shared_ptr<ListNode<int>> advanceByK(shared_ptr<ListNode<int>> head, int k) {
+  while (k-- > 0) {
+    head = head->next;
+  }
+  return head;
+}
+
 shared_ptr<ListNode<int>>
 OverlappingNoCycleLists(shared_ptr<ListNode<int>> l0,
                         shared_ptr<ListNode<int>> l1) {
+  // advance to list to the same length
+  int len0 = Length(l0), len1 = Length(l1);
+  if (len0 > len1) {
+    l0 = advanceByK(l0, len0 - len1);
+  } else if (len0 < len1) {
+    l1 = advanceByK(l1, len1 - len0);
+  }
+  // now see can we reach same point?
+  while (l0 && l1 && l0 != l1) {
+    l0 = l0->next;
+    l1 = l1->next;
+  }
+  return l0;
+}
+
+shared_ptr<ListNode<int>>
+OverlappingNoCycleListsModified(shared_ptr<ListNode<int>> l0,
+                                shared_ptr<ListNode<int>> l1) {
   // ensure two list exists
   if (!l0 || !l1)
     return nullptr;
