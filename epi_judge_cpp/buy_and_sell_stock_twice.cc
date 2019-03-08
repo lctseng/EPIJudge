@@ -8,41 +8,25 @@ using std::vector;
 #define INF (1.0 / 0.0)
 
 double BuyAndSellStockTwice(const vector<double> &prices) {
-  // find split point
-  deque<double> forwardProfit(1, 0.0);
-  // forward[i]: profit for buy and sell stock within [0:i) days
-  // using single scan
-  double low, high;
-  low = INF;
-  high = -INF;
-  for (int i = 0; i < prices.size(); i++) {
-    if (prices[i] < low) {
-      low = high = prices[i];
-    } else if (prices[i] > high)
-      high = prices[i];
-    forwardProfit.push_back(max(forwardProfit.back(), high - low));
+  if (prices.empty())
+    return 0;
+  // like DP in k-times
+  int k = 2;
+  // buy[i][j]: max profit end in buy in [0:i] days and max j times
+  vector<double> buy(k + 1);
+  vector<double> sell(k + 1);
+  for (int i = 0; i <= k; i++) {
+    buy[i] = -prices[0];
   }
-  // backward profit within [i:]
-  deque<double> backwardProfit(1, 0.0);
-  // profit within []
-  low = INF;
-  high = -INF;
-  for (int i = prices.size() - 1; i >= 0; i--) {
-    if (prices[i] > high) {
-      low = high = prices[i];
-    } else if (prices[i] < low) {
-      low = prices[i];
+  for (int i = 1; i < prices.size(); i++) {
+    for (int j = 1; j <= k; j++) {
+      double nextBuy = max(buy[j], sell[j - 1] - prices[i]);
+      double nextSell = max(sell[j], buy[j] + prices[i]);
+      buy[j] = nextBuy;
+      sell[j] = nextSell;
     }
-    backwardProfit.push_front(max(backwardProfit.back(), high - low));
   }
-  // find max point
-  double maxValue = 0.0;
-  for (int i = 0; i <= prices.size(); i++) {
-    double curr = forwardProfit[i] + backwardProfit[i];
-    if (curr > maxValue)
-      maxValue = curr;
-  }
-  return maxValue;
+  return sell[k];
 }
 
 int main(int argc, char *argv[]) {
