@@ -9,7 +9,60 @@ using std::stoi;
 using std::string;
 using std::vector;
 
+bool IsValidPart(const string &s, int begin, int end) {
+  int sz = end - begin;
+  if (sz <= 0 || sz > 3)
+    return false;
+  // leading zero check
+  if (sz > 1 && s[begin] == '0')
+    return false;
+  // num check
+  // BE CAREFUL the order
+  int num = 0;
+  for (int i = begin; i < end; i++) {
+    num = num * 10 + s[i] - '0';
+  }
+  return num <= 255;
+}
+
+// Easy
 vector<string> GetValidIpAddress(const string &s) {
+  int sz = s.length();
+  vector<string> res;
+  // find 3 partition point
+  for (int p1 = 0; p1 <= 2; p1++) {
+    if (IsValidPart(s, 0, p1 + 1))
+      for (int p2 = p1 + 1; p2 <= p1 + 3 && p2 < sz; p2++) {
+        if (IsValidPart(s, p1 + 1, p2 + 1))
+          for (int p3 = p2 + 1; p3 <= p2 + 3 && p3 < sz; p3++) {
+            if (IsValidPart(s, p2 + 1, p3 + 1) && IsValidPart(s, p3 + 1, sz)) {
+              // add answer
+              string current;
+              int i = 0;
+              for (; i <= p1; i++) {
+                current.push_back(s[i]);
+              }
+              current.append(1, '.');
+              for (; i <= p2; i++) {
+                current.push_back(s[i]);
+              }
+              current.append(1, '.');
+              for (; i <= p3; i++) {
+                current.push_back(s[i]);
+              }
+              current.append(1, '.');
+              for (; i < sz; i++) {
+                current.push_back(s[i]);
+              }
+              res.emplace_back(move(current));
+            }
+          }
+      }
+  }
+  return res;
+}
+
+vector<string> GetValidIpAddressFast(const string &s) {
   // find 3 cutting period
   int sz = s.length();
   vector<string> res;
