@@ -25,8 +25,51 @@ bool IsValidPart(const string &s, int begin, int end) {
   return num <= 255;
 }
 
-// Easy
+vector<string> res;
+string builder;
+
+// k: remaining peroid to add
+void GetValidIpAddressHelper(const string &s, int begin, int k) {
+  if ((s.length() - begin) > 3 * (1 + k)) {
+    return;
+  } else if (k == 0 && IsValidPart(s, begin, s.length())) {
+    int added = 0;
+    for (int i = begin; i < s.length(); i++) {
+      builder.push_back(s[i]);
+      ++added;
+    }
+    res.push_back(builder);
+    while (added-- > 0) {
+      builder.pop_back();
+    }
+  } else {
+    // pick a end point
+    int added = 0;
+    for (int index = begin; index < begin + 3 && index < s.length(); index++) {
+      builder.push_back(s[index]);
+      ++added;
+      if (IsValidPart(s, begin, index + 1)) {
+        builder.push_back('.');
+        GetValidIpAddressHelper(s, index + 1, k - 1);
+        builder.pop_back();
+      }
+    }
+    while (added-- > 0) {
+      builder.pop_back();
+    }
+  }
+}
+
+// Recursive
 vector<string> GetValidIpAddress(const string &s) {
+  res.clear();
+  builder.clear();
+  GetValidIpAddressHelper(s, 0, 3);
+  return res;
+}
+
+// Easy
+vector<string> GetValidIpAddressEasy(const string &s) {
   int sz = s.length();
   vector<string> res;
   // find 3 partition point
