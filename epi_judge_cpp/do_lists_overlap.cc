@@ -4,6 +4,123 @@
 #include "test_framework/timed_executor.h"
 #include <set>
 #include <stdexcept>
+using std::make_shared;
+
+int Length(shared_ptr<ListNode<int>> head) {
+  int r = 0;
+  while (head) {
+    ++r;
+    head = head->next;
+  }
+  return r;
+}
+
+shared_ptr<ListNode<int>> advanceByK(shared_ptr<ListNode<int>> head, int k) {
+  while (k-- > 0) {
+    head = head->next;
+  }
+  return head;
+}
+
+shared_ptr<ListNode<int>>
+OverlappingNoCycleLists(shared_ptr<ListNode<int>> l0,
+                        shared_ptr<ListNode<int>> l1) {
+  // advance to list to the same length
+  int len0 = Length(l0), len1 = Length(l1);
+  if (len0 > len1) {
+    l0 = advanceByK(l0, len0 - len1);
+  } else if (len0 < len1) {
+    l1 = advanceByK(l1, len1 - len0);
+  }
+  // now see can we reach same point?
+  while (l0 && l1 && l0 != l1) {
+    l0 = l0->next;
+    l1 = l1->next;
+  }
+  return l0;
+}
+
+shared_ptr<ListNode<int>> CheckListHasCycle(shared_ptr<ListNode<int>> head) {
+  // use dummy head
+  shared_ptr<ListNode<int>> dummy = make_shared<ListNode<int>>(0, head);
+  auto slow = dummy;
+  auto fast = dummy;
+  auto finder = dummy;
+  while (true) {
+    slow = slow->next;
+    fast = fast->next;
+    if (!fast)
+      return nullptr;
+    fast = fast->next;
+    if (!fast)
+      return nullptr;
+    if (slow == fast)
+      break;
+  }
+  while (true) {
+    slow = slow->next;
+    finder = finder->next;
+    if (slow == finder) {
+      return slow;
+    }
+  }
+}
+
+int Distance(shared_ptr<ListNode<int>> a, shared_ptr<ListNode<int>> b) {
+  int d = 0;
+  while (a != b) {
+    a = a->next;
+    ++d;
+  }
+  return d;
+}
+
+shared_ptr<ListNode<int>> OverlappingLists(shared_ptr<ListNode<int>> l0,
+                                           shared_ptr<ListNode<int>> l1) {
+  // check has cycle?
+  auto cycle0 = CheckListHasCycle(l0);
+  auto cycle1 = CheckListHasCycle(l1);
+  if (!cycle0 && !cycle1) {
+    // both has no cycle
+    return OverlappingNoCycleLists(l0, l1);
+  }
+  if ((!cycle0 && cycle1) || (cycle1 && !cycle0)) {
+    // one has cycle, the other does not
+    return nullptr;
+  }
+  // both has cycle
+  // check the cycle is same cycle?
+  // can we start from one cycle and reach the other?
+  auto temp = cycle0->next;
+  while (temp != cycle0 && temp != cycle1) {
+    temp = temp->next;
+  }
+  if (temp != cycle1)
+    return nullptr;
+  // now two list has the same cycle in the end
+  // two case:
+  // case1:  overlapped before cycle start
+  int distance0 = Distance(l0, cycle0);
+  int distance1 = Distance(l1, cycle1);
+  // advance together
+  if (distance0 > distance1) {
+    l0 = advanceByK(l0, distance0 - distance1);
+  } else if (distance1 > distance0) {
+    l1 = advanceByK(l1, distance1 - distance0);
+  }
+  while (l0 != cycle0 && l1 != cycle1 && l0 != l1) {
+    l0 = l0->next;
+    l1 = l1->next;
+  }
+  if (l0 == l1) {
+    // l0 meet l1 before the cycle
+    return l0;
+  } else {
+    // case2: overlapped in the cycle. this time both cycle0 and cycle1 are
+    // acceptable
+    return cycle0; // or cycle1
+  }
+}
 
 shared_ptr<ListNode<int>>
 FindCycleInListPrev(shared_ptr<ListNode<int>> origHead) {
@@ -36,59 +153,8 @@ FindCycleInListPrev(shared_ptr<ListNode<int>> origHead) {
 }
 
 shared_ptr<ListNode<int>>
-OverlappingNoCycleLists(shared_ptr<ListNode<int>> l0,
-                        shared_ptr<ListNode<int>> l1) {
-  // ensure two list exists
-  if (!l0 || !l1)
-    return nullptr;
-  // edge case: fully overlapped
-  if (l0 == l1)
-    return l0;
-  // link L1's tail to its head
-  // traverse L0, if meet null, then no overlap
-  // if meed L1's head, is overlap
-  // Time: O(L0+L1), Space: O(1)
-  // step 1: link L1
-  auto tail1 = l1;
-  while (tail1->next) {
-    tail1 = tail1->next;
-  }
-  tail1->next = l1;
-  // step 2: perform cycle detection
-  auto slow = l0, fast = l0;
-  shared_ptr<ListNode<int>> res = nullptr;
-  bool hasCycle = false;
-  while (true) {
-    slow = slow->next;
-    fast = fast->next;
-    if (!fast)
-      break;
-    fast = fast->next;
-    if (!fast)
-      break;
-    if (fast == slow) {
-      hasCycle = true;
-      break;
-    }
-  }
-  if (hasCycle) {
-    auto finder = l0;
-    while (true) {
-      slow = slow->next;
-      finder = finder->next;
-      if (slow == finder) {
-        res = slow;
-        break;
-      }
-    }
-  }
-  // remember to restore
-  tail1->next = nullptr;
-  return res;
-}
-
-shared_ptr<ListNode<int>> OverlappingLists(shared_ptr<ListNode<int>> l0,
-                                           shared_ptr<ListNode<int>> l1) {
+OverlappingListsModified(shared_ptr<ListNode<int>> l0,
+                         shared_ptr<ListNode<int>> l1) {
   // edge case: one list is empty
   if (!l0 || !l1)
     return nullptr;
