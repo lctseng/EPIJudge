@@ -1,9 +1,42 @@
 #include "test_framework/generic_test.h"
 #include <vector>
 using std::max;
+using std::min;
 using std::vector;
 
 double BuyAndSellStockKTimes(const vector<double> &prices, int k) {
+  // edge case: empty
+  if (k == 0 || prices.empty())
+    return 0.0;
+  if (k >= prices.size() / 2) {
+    // simple sum
+    double sum = 0;
+    for (int i = 0; i < prices.size() - 1; i++) {
+      double diff = prices[i + 1] - prices[i];
+      if (diff > 0) {
+        sum += diff;
+      }
+    }
+    return sum;
+  }
+  // buy[i][j]: max profit end in buy in [0:i] days and max j times
+  vector<double> buy(k + 1);
+  vector<double> sell(k + 1);
+  for (int i = 0; i <= k; i++) {
+    buy[i] = -prices[0];
+  }
+  for (int i = 1; i < prices.size(); i++) {
+    for (int j = 1; j <= k; j++) {
+      double nextBuy = max(buy[j], sell[j - 1] - prices[i]);
+      double nextSell = max(sell[j], buy[j] + prices[i]);
+      buy[j] = nextBuy;
+      sell[j] = nextSell;
+    }
+  }
+  return sell[k];
+}
+
+double BuyAndSellStockKTimesPrecise(const vector<double> &prices, int k) {
   // edge case: empty
   if (k == 0 || prices.empty())
     return 0.0;
