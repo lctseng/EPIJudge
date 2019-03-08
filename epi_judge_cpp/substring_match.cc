@@ -7,6 +7,52 @@ using std::vector;
 // Returns the index of the first character of the substring if found, -1
 // otherwise.
 
+bool IsMatch(const string &haystack, const string &needle, int begin) {
+  for (int i = 0; i < needle.size(); i++) {
+    int index = begin + i;
+    if (index >= haystack.length() || haystack[index] != needle[i])
+      return false;
+  }
+  return true;
+}
+
+int RabinKarp(const string &haystack, const string &needle) {
+  // edge case
+  if (needle.length() > haystack.length())
+    return -1;
+  // hash function: use base26 number
+  // step 1 compute hash for haystack and needle
+  const int BASE = 26;
+  // dont care for overflow
+  unsigned hashHaystack = 0;
+  unsigned hashNeedle = 0;
+  unsigned power = 1; // use to rolliing update haystack
+  for (int i = 0; i < needle.length(); i++) {
+    if (i > 0)
+      power = power * 26;
+    hashHaystack = hashHaystack * BASE + haystack[i];
+    hashNeedle = hashNeedle * BASE + needle[i];
+  }
+  for (int i = needle.length(); i < haystack.length(); i++) {
+    // compare first
+    if (hashHaystack == hashNeedle &&
+        IsMatch(haystack, needle, i - needle.length())) {
+      return i - needle.length();
+    }
+    // update haystack hash later
+    // remove existing
+    hashHaystack -= haystack[i - needle.length()] * power;
+    hashHaystack = hashHaystack * BASE + haystack[i];
+  }
+  // match final
+  if (hashHaystack == hashNeedle &&
+      IsMatch(haystack, needle, haystack.length() - needle.length())) {
+    return haystack.length() - needle.length();
+  }
+  // not found
+  return -1;
+}
+
 vector<int> ComputeFailure(const string &needle) {
   vector<int> failure(needle.length());
   failure[0] = -1;
@@ -23,7 +69,7 @@ vector<int> ComputeFailure(const string &needle) {
   return move(failure);
 }
 
-int RabinKarp(const string &haystack, const string &needle) {
+int KMP(const string &haystack, const string &needle) {
   if (needle.empty())
     return 0;
   auto failure = ComputeFailure(needle);
