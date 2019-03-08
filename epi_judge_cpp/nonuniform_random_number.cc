@@ -7,6 +7,7 @@
 #include <vector>
 using std::abs;
 using std::bind;
+using std::lower_bound;
 using std::unordered_map;
 using std::vector;
 
@@ -24,6 +25,19 @@ int NonuniformRandomNumberGeneration(const vector<int> &values,
       return values[i];
   }
   return values.back();
+}
+
+int NonuniformRandomNumberGenerationSlow(const vector<int> &values,
+                                         const vector<double> &probabilities) {
+  double r = UniformZeroOne();
+  vector<double> prefixSum(1, probabilities.front());
+  for (int i = 1; i < probabilities.size(); i++) {
+    prefixSum.push_back(prefixSum.back() + probabilities[i]);
+  }
+  prefixSum.back() = 1.0; // fix potential precision error
+  int index =
+      lower_bound(prefixSum.begin(), prefixSum.end(), r) - prefixSum.begin();
+  return values[index];
 }
 bool NonuniformRandomNumberGenerationRunner(
     TimedExecutor &executor, const vector<int> &values,
