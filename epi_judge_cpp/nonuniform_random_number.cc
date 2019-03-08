@@ -1,22 +1,33 @@
+#include "test_framework/generic_test.h"
+#include "test_framework/random_sequence_checker.h"
+#include "test_framework/timed_executor.h"
 #include <algorithm>
 #include <functional>
 #include <unordered_map>
 #include <vector>
-#include "test_framework/generic_test.h"
-#include "test_framework/random_sequence_checker.h"
-#include "test_framework/timed_executor.h"
 using std::abs;
 using std::bind;
 using std::unordered_map;
 using std::vector;
-int NonuniformRandomNumberGeneration(const vector<int>& values,
-                                     const vector<double>& probabilities) {
-  // TODO - you fill in here.
-  return 0;
+
+const double kRndMax = (double)RAND_MAX - 1;
+
+double UniformZeroOne() { return (double)(rand()) / kRndMax; }
+
+int NonuniformRandomNumberGeneration(const vector<int> &values,
+                                     const vector<double> &probabilities) {
+  double r = UniformZeroOne();
+  double sum = 0;
+  for (int i = 0; i < probabilities.size(); i++) {
+    sum += probabilities[i];
+    if (sum >= r)
+      return values[i];
+  }
+  return values.back();
 }
 bool NonuniformRandomNumberGenerationRunner(
-    TimedExecutor& executor, const vector<int>& values,
-    const vector<double>& probabilities) {
+    TimedExecutor &executor, const vector<int> &values,
+    const vector<double> &probabilities) {
   constexpr int kN = 1000000;
   vector<int> results;
 
@@ -46,14 +57,14 @@ bool NonuniformRandomNumberGenerationRunner(
 }
 
 void NonuniformRandomNumberGenerationWrapper(
-    TimedExecutor& executor, const vector<int>& values,
-    const vector<double>& probabilities) {
+    TimedExecutor &executor, const vector<int> &values,
+    const vector<double> &probabilities) {
   RunFuncWithRetries(bind(NonuniformRandomNumberGenerationRunner,
                           std::ref(executor), std::cref(values),
                           std::cref(probabilities)));
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"executor", "values", "probabilities"};
   return GenericTestMain(args, "nonuniform_random_number.cc",
