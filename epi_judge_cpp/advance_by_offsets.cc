@@ -7,16 +7,12 @@ bool CanReachEnd(const vector<int> &max_advance_steps) {
   if (max_advance_steps.size() <= 1)
     return true;
   // maintin "max reachable"
-  int i = 0;
   int maxReachable = 0;
   int target = max_advance_steps.size() - 1;
-  while (i <= maxReachable) {
-    // update max reachable according to current step
+  for (int i = 0; i <= maxReachable; i++) {
     maxReachable = max(maxReachable, i + max_advance_steps[i]);
     if (maxReachable >= target)
       return true;
-    // advance
-    i++;
   }
   return maxReachable >= target;
 }
