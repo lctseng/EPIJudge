@@ -7,6 +7,8 @@ bool CanReachEnd(const vector<int> &max_advance_steps) {
   if (max_advance_steps.size() <= 1)
     return true;
   // maintin "max reachable"
+  // BE CAREFUL
+  // the ending condition and definition of 'maxReachable'
   int maxReachable = 0;
   int target = max_advance_steps.size() - 1;
   for (int i = 0; i <= maxReachable; i++) {
