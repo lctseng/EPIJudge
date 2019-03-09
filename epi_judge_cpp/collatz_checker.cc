@@ -16,24 +16,20 @@ bool TestCollatzConjecture(int n) {
   for (int i = 3; i <= n; i += 2) {
     int current = i;
     unordered_set<int> seen;
-    unordered_set<int> toValid;
     while (current >= i) {
       if (seen.count(current))
         return false; // not hold! we go into loop
       seen.insert(current);
-      if (valid.count(current)) // we have existing result, this is valid
-        break;
       if (current & 1) {
         // BE CAUREFUL: formally we need to check overflow
+        if (valid.count(current)) // we have existing result, this is valid
+          break;
+        valid.insert(current);
         current = current * 3 + 1;
-        toValid.insert(current);
       } else {
         current >>= 1;
-        if (current <= i)
-          break; // holds!
       }
     }
-    valid.insert(toValid.begin(), toValid.end());
   }
   return true;
 }
