@@ -1,28 +1,39 @@
 #include "test_framework/generic_test.h"
 #include <queue>
 #include <vector>
-using std::greater;
 using std::priority_queue;
+using std::swap;
 using std::vector;
 
+struct Entry {
+  int value;
+  int index;
+};
+
+bool operator<(const Entry &a, const Entry &b) { return a.value < b.value; }
+
 vector<int> KLargestInBinaryHeap(const vector<int> &A, int k) {
-  priority_queue<int, vector<int>, greater<int>> minHeap;
-  // insert k  values
+  if (A.empty())
+    return {};
+  priority_queue<Entry> maxHeap;
+  // dont scan over the Array A
+  // A is already a max-heap
+  // find K values
+  vector<int> res;
+  maxHeap.push({A[0], 0});
+  int sz = A.size();
   for (int i = 0; i < k; i++) {
-    minHeap.push(A[i]);
-  }
-  for (int i = k; i < A.size(); i++) {
-    // insert next value
-    if (A[i] > minHeap.top()) {
-      minHeap.push(A[i]);
-      minHeap.pop();
-    }
-  }
-  // dump the pq
-  vector<int> res(minHeap.size());
-  for (int i = res.size() - 1; i >= 0; i--) {
-    res[i] = minHeap.top();
-    minHeap.pop();
+    auto parent = maxHeap.top();
+    maxHeap.pop();
+    res.push_back(parent.value);
+    // add two children to heap
+    // BE CAREFUL: boundary check
+    int candidate = parent.index * 2 + 1;
+    if (candidate < sz)
+      maxHeap.push({A[candidate], candidate});
+    candidate = parent.index * 2 + 2;
+    if (candidate < sz)
+      maxHeap.push({A[candidate], candidate});
   }
   return res;
 }
