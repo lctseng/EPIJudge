@@ -4,6 +4,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+using std::make_pair;
+using std::pair;
 using std::string;
 using std::unordered_map;
 using std::vector;
@@ -25,10 +27,10 @@ FindSmallestSequentiallyCoveringSubset(const vector<string> &paragraph,
   // ex: a,b,a,b,a,c , to find: b,a,c
   // after looking a,b,a,b the hash: a->1, b->3
   // after a,b,a,b,a, get new a->3, force replace old
-  unordered_map<string, int> startIndexMap;
-  unordered_map<string, string> prevMap; // map prev word for every keyword
+  unordered_map<int, int> startIndexMap;  // key is keyword index
+  unordered_map<string, int> wordToIndex; // map prev word for every keyword
   for (int i = 1; i < keywords.size(); i++) {
-    prevMap[keywords[i]] = keywords[i - 1]; // current->prev
+    wordToIndex[keywords[i]] = i;
   }
   // scan over paragraph
   Subarray minSubarray = {-1, -1};
@@ -37,14 +39,14 @@ FindSmallestSequentiallyCoveringSubset(const vector<string> &paragraph,
     auto &currentWord = paragraph[i];
     // start word check, add new start entry
     if (currentWord == keywords[0]) {
-      startIndexMap[currentWord] = i;
+      startIndexMap[0] = i;
     }
     // preWord check
     else {
-      auto prevIt = prevMap.find(currentWord);
-      if (prevIt != prevMap.end()) {
-        auto &prevWord = prevIt->second;
-        auto it = startIndexMap.find(prevWord);
+      auto wordIndexIt = wordToIndex.find(currentWord);
+      if (wordIndexIt != wordToIndex.end()) {
+        int kwIndex = wordIndexIt->second;
+        auto it = startIndexMap.find(kwIndex - 1);
         if (it != startIndexMap.end()) { // if exist,  concat
           int startIndex = it->second;
           // remove old
@@ -60,7 +62,7 @@ FindSmallestSequentiallyCoveringSubset(const vector<string> &paragraph,
             }
           } else {
             // otherwise, compute new entry and insert(overwrite)
-            startIndexMap[currentWord] = startIndex;
+            startIndexMap[kwIndex] = startIndex;
           }
         }
         // not found: cannot find a unused starting for this keyword
