@@ -27,7 +27,7 @@ FindSmallestSequentiallyCoveringSubset(const vector<string> &paragraph,
   // ex: a,b,a,b,a,c , to find: b,a,c
   // after looking a,b,a,b the hash: a->1, b->3
   // after a,b,a,b,a, get new a->3, force replace old
-  unordered_map<int, int> startIndexMap;  // key is keyword index
+  vector<int> startIndexMap(keywords.size(), -1); // key is keyword index
   unordered_map<string, int> wordToIndex; // map prev word for every keyword
   for (int i = 1; i < keywords.size(); i++) {
     wordToIndex[keywords[i]] = i;
@@ -46,11 +46,10 @@ FindSmallestSequentiallyCoveringSubset(const vector<string> &paragraph,
       auto wordIndexIt = wordToIndex.find(currentWord);
       if (wordIndexIt != wordToIndex.end()) {
         int kwIndex = wordIndexIt->second;
-        auto it = startIndexMap.find(kwIndex - 1);
-        if (it != startIndexMap.end()) { // if exist,  concat
-          int startIndex = it->second;
+        int startIndex = startIndexMap[kwIndex - 1];
+        if (startIndex != -1) { // if exist,  concat
           // remove old
-          startIndexMap.erase(it);
+          startIndexMap[kwIndex - 1] = -1;
           // if this word is the ending keyword
           // update minSubarray
           if (currentWord == keywords.back()) {
