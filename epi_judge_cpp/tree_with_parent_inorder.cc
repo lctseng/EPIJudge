@@ -5,6 +5,46 @@ using std::vector;
 
 vector<int> InorderTraversal(const unique_ptr<BinaryTreeNode<int>> &tree) {
   vector<int> res;
+  BinaryTreeNode<int> *current = tree.get(), *prev = nullptr;
+  while (current) {
+    if (prev == current->parent) {
+      // go from parent
+      while (current->left) {
+        prev = current;
+        current = current->left.get();
+      }
+      // current left is empty
+      res.push_back(current->data);
+      prev = current;
+      if (current->right) {
+        current = current->right.get();
+      } else {
+        current = current->parent;
+      }
+
+    }
+    // back from left
+    else if (prev == current->left.get()) {
+      res.push_back(current->data);
+      if (current->right) {
+        prev = current;
+        current = current->right.get();
+      } else {
+        // no right, go back
+        prev = current;
+        current = current->parent;
+      }
+    } else {
+      // back from right
+      prev = current;
+      current = current->parent;
+    }
+  }
+  return res;
+}
+
+vector<int> InorderTraversal2(const unique_ptr<BinaryTreeNode<int>> &tree) {
+  vector<int> res;
 
   const BinaryTreeNode<int> *current = tree.get();
   const BinaryTreeNode<int> *prev = nullptr;
