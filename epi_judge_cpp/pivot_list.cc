@@ -34,12 +34,10 @@ shared_ptr<ListNode<int>> ListPivoting(const shared_ptr<ListNode<int>> &l,
   }
   // BE CAREFUL!
   // fix tailing
+  // combine these three, order MATTERS!
   currentGreater->next = nullptr;
-  // combine these three
-  currentLess->next = dummyEqual->next;
-  if (!currentLess->next)
-    currentLess->next = dummyGreater->next;
   currentEqual->next = dummyGreater->next;
+  currentLess->next = dummyEqual->next;
   return dummyLess->next;
 }
 std::vector<int> ListToVector(const shared_ptr<ListNode<int>> &l) {
