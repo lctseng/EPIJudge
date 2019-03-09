@@ -15,15 +15,22 @@ template <typename T> struct BinaryTreeNode {
 
 const BinaryTreeNode<int> *
 FindKthNodeBinaryTree(const unique_ptr<BinaryTreeNode<int>> &tree, int k) {
-  if (!tree || k > tree->size)
-    return nullptr;
-  int leftSize = tree->left ? tree->left->size : 0;
-  if (leftSize + 1 == k)
-    return tree.get();
-  else if (leftSize + 1 > k)
-    return FindKthNodeBinaryTree(tree->left, k);
-  else
-    return FindKthNodeBinaryTree(tree->right, k - 1 - leftSize);
+
+  const BinaryTreeNode<int> *current = tree.get();
+  while (current) {
+    if (!current || k > current->size)
+      return nullptr;
+    int leftSize = current->left ? current->left->size : 0;
+    if (leftSize + 1 == k)
+      return current;
+    else if (leftSize + 1 > k)
+      current = current->left.get();
+    else {
+      current = current->right.get();
+      k -= leftSize + 1;
+    }
+  }
+  return nullptr;
 }
 template <typename KeyT>
 struct SerializationTraits<std::unique_ptr<BinaryTreeNode<KeyT>>>
