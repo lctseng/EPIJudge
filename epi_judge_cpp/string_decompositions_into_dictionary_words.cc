@@ -7,7 +7,42 @@ using std::string;
 using std::unordered_map;
 using std::vector;
 
+bool ContainsAllWord(unordered_map<string, int> &wordFreq, const string &s,
+                     int offset, int wordNum, int wordLen) {
+  unordered_map<string, int> currentFreq;
+  for (int i = 0; i < wordNum; i++) {
+    string currentWord = s.substr(offset + i * wordLen, wordLen);
+    auto it = wordFreq.find(currentWord);
+    if (it == wordFreq.end())
+      return false; // unknown word
+    if (++currentFreq[currentWord] > wordFreq[currentWord])
+      return false; // too many
+  }
+  return true;
+}
+
+// simple and work better in most of cases
 vector<int> FindAllSubstrings(const string &s, const vector<string> &words) {
+  unordered_map<string, int> wordFreq;
+  for (auto &word : words) {
+    ++wordFreq[word];
+  }
+  int wordLen = words[0].length();
+  int wordNum = words.size();
+  // for every possible start of string
+  vector<int> res;
+  int maxI = s.length() - wordLen * wordNum;
+  for (int i = 0; i <= maxI; i++) {
+    if (ContainsAllWord(wordFreq, s, i, wordNum, wordLen)) {
+      res.push_back(i);
+    }
+  }
+  return res;
+}
+
+// work better for extreme large case
+vector<int> FindAllSubstringsPrecise(const string &s,
+                                     const vector<string> &words) {
   if (words.empty())
     return {};
   int wordLen = words[0].length();
