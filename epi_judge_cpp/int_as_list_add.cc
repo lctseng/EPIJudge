@@ -1,34 +1,16 @@
 #include "list_node.h"
 #include "test_framework/generic_test.h"
 using std::min;
-int Length(shared_ptr<ListNode<int>> l) {
-  int r = 0;
-  while (l) {
-    ++r;
-    l = l->next;
-  }
-  return r;
-}
-
-shared_ptr<ListNode<int>> AddTwoNumbers(shared_ptr<ListNode<int>> L1,
-                                        shared_ptr<ListNode<int>> L2) {
-  // easy sol: short one add to long one
-  int len1 = Length(L1), len2 = Length(L2);
-  shared_ptr<ListNode<int>> base = nullptr, addend = nullptr;
-  if (len1 >= len2) {
-    base = L1;
-    addend = L2;
-  } else {
-    base = L2;
-    addend = L1;
-  }
-  // stage 1: add common part, with carry
-  int minLen = min(len1, len2);
+shared_ptr<ListNode<int>> AddTwoNumbers(shared_ptr<ListNode<int>> base,
+                                        shared_ptr<ListNode<int>> addend) {
+  // dirty solution: reuse and overwrite original space
+  // time and space efficient!
   auto baseCurrent = base, addendCurrent = addend;
   shared_ptr<ListNode<int>> basePrev = nullptr;
   int carry = 0;
-  while (minLen-- > 0) {
-    baseCurrent->data += carry + addendCurrent->data;
+  // optimze: early terminate when no carry and next number to add
+  while (baseCurrent && (carry || addendCurrent)) {
+    baseCurrent->data += carry + (addendCurrent ? addendCurrent->data : 0);
     if (baseCurrent->data >= 10) {
       baseCurrent->data -= 10;
       carry = 1;
@@ -36,22 +18,19 @@ shared_ptr<ListNode<int>> AddTwoNumbers(shared_ptr<ListNode<int>> L1,
       // we have no carry for next digit
       carry = 0;
     }
-    basePrev = baseCurrent;
-    baseCurrent = baseCurrent->next;
-    addendCurrent = addendCurrent->next;
-  }
-  // stage 2: end of addend, continue add with carry with base
-  while (baseCurrent) {
-    baseCurrent->data += carry;
-    if (baseCurrent->data >= 10) {
-      baseCurrent->data -= 10;
-      carry = 1;
-    } else {
-      carry = 0;
+    // handle the case when len(base) < len(addend)
+    if (!baseCurrent->next && addendCurrent && addendCurrent->next) {
+      // next base is empty, but not addend
+      // force concat base
+      baseCurrent->next = addendCurrent->next;
+      addendCurrent->next = nullptr;
     }
     basePrev = baseCurrent;
     baseCurrent = baseCurrent->next;
+    if (addendCurrent)
+      addendCurrent = addendCurrent->next;
   }
+
   if (carry) {
     // carry left. need append new node
     basePrev->next = make_shared<ListNode<int>>(carry);
