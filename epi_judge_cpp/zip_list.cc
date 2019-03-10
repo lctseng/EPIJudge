@@ -3,6 +3,7 @@
 #include <memory>
 using std::make_shared;
 using std::shared_ptr;
+using std::unique_ptr;
 
 shared_ptr<ListNode<int>> ReverseList(shared_ptr<ListNode<int>> current) {
   shared_ptr<ListNode<int>> prev = nullptr;
@@ -30,13 +31,9 @@ shared_ptr<ListNode<int>>
 ZippingLinkedList(const shared_ptr<ListNode<int>> &L) {
   if (!L)
     return nullptr;
-  if (!L->next)
-    return make_shared<ListNode<int>>(L->data);
   // use slow/fast to find split point
   // fast go first, then the slow->next is the new start point
-  const ListNode<int> *slow = L.get(), *fast = L.get();
-  auto newHead = make_shared<ListNode<int>>(slow->data);
-  auto newCurrent = newHead;
+  ListNode<int> *slow = L.get(), *fast = L.get();
   while (true) {
     fast = fast->next.get();
     if (!fast) {
@@ -48,14 +45,13 @@ ZippingLinkedList(const shared_ptr<ListNode<int>> &L) {
     }
     // meanwhile, copy the slow list
     slow = slow->next.get();
-    newCurrent->next = make_shared<ListNode<int>>(slow->data);
-    newCurrent = newCurrent->next;
   }
   // reverse latter part (use copy)
-  auto *latterHead = slow->next.get();
-  auto reversedHead = ReverseListCopy(latterHead);
+  auto latterHead = slow->next;
+  slow->next = nullptr;
+  auto reversedHead = ReverseList(latterHead);
   // merge! (when odd, first part is larger than second part)
-  newCurrent = newHead;
+  auto newCurrent = L;
   while (newCurrent && reversedHead) {
     // insert this between newCurrent and newCurrent->next
     auto nextNext = newCurrent->next;
@@ -64,7 +60,7 @@ ZippingLinkedList(const shared_ptr<ListNode<int>> &L) {
     newCurrent->next->next = nextNext;
     newCurrent = nextNext;
   }
-  return newHead;
+  return L;
 }
 
 int main(int argc, char *argv[]) {
