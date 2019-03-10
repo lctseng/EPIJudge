@@ -1,11 +1,11 @@
 #include "test_framework/generic_test.h"
 #include <string>
-#include <unordered_set>
+#include <unordered_map>
 using std::size;
 using std::string;
-using std::unordered_set;
+using std::unordered_map;
 
-typedef unordered_set<uint64_t> Cache;
+typedef unordered_map<uint64_t, bool> Cache;
 
 // assume it is a valid regex
 // i for regex
@@ -18,10 +18,16 @@ bool IsMatchHelper(Cache &cache, const string &regex, const string &s, int i,
     return true;
   }
   // check this char of regex
+  uint64_t cacheKey =
+      (uint64_t)i << 31 | (uint64_t)j << 1 | (uint64_t)allowSubstr;
+  auto it = cache.find(cacheKey);
+  if (it != cache.end())
+    return it->second;
   char c = regex[i];
   if (c == '^') {
     // start anchor
-    return j == 0 && IsMatchHelper(cache, regex, s, i + 1, j, false);
+    return cache[cacheKey] =
+               j == 0 && IsMatchHelper(cache, regex, s, i + 1, j, false);
   } else if (c == '$') {
     // end anchor
     return j == size(s);
@@ -37,17 +43,21 @@ bool IsMatchHelper(Cache &cache, const string &regex, const string &s, int i,
     // we can start form any substring
     if (hasStar) {
       // wildcard activate or not activate
-      return (thisMatch && IsMatchHelper(cache, regex, s, i, j + 1,
-                                         false)) || // match current
-             (allowSubstr && j < size(s) &&
-              IsMatchHelper(cache, regex, s, i, j + 1,
-                            allowSubstr)) ||                  // use substr
-             IsMatchHelper(cache, regex, s, i + 2, j, false); // skip current
+      return cache[cacheKey] =
+                 (thisMatch && IsMatchHelper(cache, regex, s, i, j + 1,
+                                             false)) || // match current
+                 (allowSubstr && j < size(s) &&
+                  IsMatchHelper(cache, regex, s, i, j + 1,
+                                allowSubstr)) || // match substr
+                 IsMatchHelper(cache, regex, s, i + 2, j,
+                               false); // skip current
     } else {
-      return (thisMatch &&
-              IsMatchHelper(cache, regex, s, i + 1, j + 1, false)) ||
-             (allowSubstr && j < size(s) &&
-              IsMatchHelper(cache, regex, s, i, j + 1, allowSubstr));
+      return cache[cacheKey] =
+                 (thisMatch && IsMatchHelper(cache, regex, s, i + 1, j + 1,
+                                             false)) || // match current
+                 (allowSubstr && j < size(s) &&
+                  IsMatchHelper(cache, regex, s, i, j + 1,
+                                allowSubstr)); // match substr
     }
   }
 }
