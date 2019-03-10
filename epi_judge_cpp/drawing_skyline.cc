@@ -4,6 +4,8 @@
 #include <set>
 #include <vector>
 using std::greater;
+using std::max;
+using std::min;
 using std::multiset;
 using std::vector;
 
@@ -26,7 +28,41 @@ bool cmpEvent(const Event &a, const Event &b) {
   }
 }
 
+// When max width W is constant and small
 Skyline ComputeSkyline(const vector<Rect> &buildings) {
+  // compute offset
+  int leftOffset = 2000000000;
+  int rightBound = 0;
+  for (auto &rect : buildings) {
+    if (rect.left < leftOffset) {
+      leftOffset = rect.left;
+    }
+    if (rect.right > rightBound) {
+      rightBound = rect.right;
+    }
+  }
+  // leftOffset is the smallest left
+  // create digital array size = rightBound - leftOffset
+  vector<int> plane(rightBound - leftOffset + 1, 0);
+  for (auto &building : buildings) {
+    for (int i = building.left; i <= building.right; i++) {
+      plane[i - leftOffset] = max(plane[i - leftOffset], building.height);
+    }
+  }
+  Skyline res;
+  // when adding answer, remenber to add offset
+  int prevI = 0;
+  for (int i = 0; i < plane.size(); i++) {
+    if (i == plane.size() - 1 || plane[i] != plane[i + 1]) {
+      // create for current
+      res.push_back({leftOffset + prevI, leftOffset + i, plane[i]});
+      prevI = i + 1;
+    }
+  }
+  return res;
+}
+
+Skyline ComputeSkylineGeneral(const vector<Rect> &buildings) {
   if (buildings.empty())
     return {};
   // generate set of events from endpoints: open, close events
