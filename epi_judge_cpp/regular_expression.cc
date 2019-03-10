@@ -13,6 +13,7 @@ typedef unordered_map<uint64_t, bool> Cache;
 bool IsMatchHelper(Cache &cache, const string &regex, const string &s, int i,
                    int j, bool allowSubstr) {
   // BE CAREFUL! substring match is allowed
+  // Need to handle "allowSubstr" !!!!
   if (i == size(regex)) {
     // empty regex always match anything
     return true;
