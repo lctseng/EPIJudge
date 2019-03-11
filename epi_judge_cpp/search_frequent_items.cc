@@ -10,10 +10,68 @@ using std::string;
 using std::unordered_map;
 using std::vector;
 
+// Faster version: in fact, we decrease all candidate in the hash at once
 // Finds the candidates which may occur > n / k times.
 vector<string>
 SearchFrequentItems(int k, vector<string>::const_iterator stream_begin,
                     const vector<string>::const_iterator stream_end) {
+  // this can find k most candidate
+  unordered_map<string, int> candidateFreq;
+  auto currentIt = stream_begin;
+  while (currentIt != stream_end) {
+    auto &currentStr = *(currentIt++);
+    // update freq
+    auto it = candidateFreq.find(currentStr);
+    if (it != candidateFreq.end()) {
+      it->second++;
+    } else {
+      // not in
+      if (candidateFreq.size() < k) {
+        // new entry
+        candidateFreq[currentStr]++;
+      } else {
+        // size reached, try deleting
+        vector<string> toBeRemoved;
+        for (auto &data : candidateFreq) {
+          if (--data.second == 0) {
+            toBeRemoved.push_back(data.first);
+          }
+        }
+        for (auto &s : toBeRemoved) {
+          candidateFreq.erase(s);
+        }
+      }
+    }
+  }
+  // in the second pass, only foucs on these element
+  // reset freq counter
+  for (auto &data : candidateFreq) {
+    data.second = 0;
+  }
+  // find their freq
+  currentIt = stream_begin;
+  while (currentIt != stream_end) {
+    auto &currentStr = *(currentIt++);
+    auto it = candidateFreq.find(currentStr);
+    if (it != candidateFreq.end()) {
+      it->second++;
+    }
+  }
+  // finally return those > n/k times
+  vector<string> res;
+  int countReq = (stream_end - stream_begin) / k;
+  for (auto &data : candidateFreq) {
+    if (data.second > countReq) {
+      res.push_back(data.first);
+    }
+  }
+  return res;
+}
+
+// Finds the candidates which may occur > n / k times.
+vector<string>
+SearchFrequentItemsSlow(int k, vector<string>::const_iterator stream_begin,
+                        const vector<string>::const_iterator stream_end) {
   // freqToCandidate: tree map int => string
   // CandidateToTreeIt: hash map string =>  iterator
   // this can find k most candidate
@@ -79,6 +137,7 @@ SearchFrequentItems(int k, vector<string>::const_iterator stream_begin,
   }
   return res;
 }
+
 vector<string> SearchFrequentItemsWrapper(int k, vector<string> &stream) {
   return SearchFrequentItems(k, begin(stream), end(stream));
 }
