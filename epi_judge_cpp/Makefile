@@ -1721,6 +1721,17 @@ search_for_missing_element: $(BUILD_DIR)/search_for_missing_element
 .PHONY: search_for_missing_element
 
 
+
+# abs_sorted.cc
+
+$(BUILD_DIR)/abs_sorted: $(SRC_DIR)/abs_sorted.cc | $(BUILD_DIR)
+	$(CXX_COMPILER) $(CXX_FLAGS_DEBUG) -o $@ $<
+abs_sorted: $(BUILD_DIR)/abs_sorted
+	$< $(PROGRAM_ARGS)
+
+.PHONY: abs_sorted
+
+
 # search_frequent_items.cc
 
 $(BUILD_DIR)/search_frequent_items: $(SRC_DIR)/search_frequent_items.cc | $(BUILD_DIR)
@@ -2351,6 +2362,7 @@ all: \
     $(BUILD_DIR)/search_first_key \
     $(BUILD_DIR)/search_for_min_max_in_array \
     $(BUILD_DIR)/search_for_missing_element \
+		$(BUILD_DIR)/abs_sorted \
     $(BUILD_DIR)/search_frequent_items \
     $(BUILD_DIR)/search_in_list \
     $(BUILD_DIR)/search_maze \
