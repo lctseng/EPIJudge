@@ -32,11 +32,47 @@ bool ExpHelper(const vector<int> &digits, int target, int index,
   return false;
 }
 
+// form a number start from index, pick a operator and combine with prev
+bool ExpressionSynthesisHelper(const vector<int> &digits, int target, int index,
+                               int lastOperand, char lastOp, int value) {
+  if (index == digits.size())
+    return value == target;
+  // form current number
+  int curVal = 0;
+  for (int i = index; i < digits.size(); i++) {
+    curVal = curVal * 10 + digits[i];
+    // pick op
+    // pick '+'
+    // pruning: no longer possible if value > target
+    // because this '+' will only make value increaing in the future
+    if (value <= target) {
+      if (ExpressionSynthesisHelper(digits, target, i + 1, curVal, '+',
+                                    value + curVal)) {
+        return true;
+      }
+    }
+
+    // pick '*'
+    // previous pruning may not work here,
+    // since we can use '* 0' to cancel previous values
+    if (lastOp == '+') {
+      // reverse
+      int newOperand = index == 0 ? curVal : lastOperand * curVal;
+      int newValue = value - lastOperand + newOperand;
+      if (ExpressionSynthesisHelper(digits, target, i + 1, newOperand, lastOp,
+                                    newValue)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 bool ExpressionSynthesis(const vector<int> &digits, int target) {
   // TODO - you fill in here.
   if (digits.empty())
     return target == 0;
-  return ExpHelper(digits, target, 0, 0, 0);
+  return ExpressionSynthesisHelper(digits, target, 0, 0, '+', 0);
 }
 
 int main(int argc, char *argv[]) {
