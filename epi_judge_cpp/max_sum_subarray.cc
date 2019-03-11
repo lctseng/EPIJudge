@@ -1,18 +1,16 @@
 #include "test_framework/generic_test.h"
 #include <vector>
+using std::max;
 using std::vector;
 
 int FindMaximumSubarray(const vector<int> &A) {
-  int maxSum = 0;
-  int sum = 0;
-  for (int i = 0; i < A.size(); i++) {
-    sum += A[i];
-    if (sum < A[i])
-      sum = A[i];
-    if (sum > maxSum)
-      maxSum = sum;
+  int maxNonWrap = 0;
+  int curSum = 0;
+  for (int val : A) {
+    curSum = max(curSum + val, val);
+    maxNonWrap = max(curSum, maxNonWrap);
   }
-  return maxSum;
+  return maxNonWrap;
 }
 
 int main(int argc, char *argv[]) {
