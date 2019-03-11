@@ -5,56 +5,42 @@ using std::vector;
 int BinarySearchUnknownLength(const vector<int> &A, int k) {
   if (A.empty())
     return -1;
-  // find interval such that A[2^p-1] <= k <= A[2^(p+1)-1]
+  // find interval such that A[2^(p-1)-1] <= k <= A[2^p-1]
   // upper bound can be an exception
   int p = 0;
-  while (true) {
+  bool found = false;
+  while (!found) {
     // try this p
-    int low = (1 << p) - 1;
-    int high = (1 << (p + 1)) - 1;
-    // check low is valid
-    if (A[low] == k)
-      return low;
-    if (A[low] < k) {
-      bool found = false;
-      // check high
-      try {
-        int highVal = A.at(high);
-        if (highVal < k) {
-          // still too small
-        } else if (highVal > k) {
-          // high is enough
-          found = true;
-        } else {
-          return high;
-        }
-      } catch (...) {
-        // high is high enough
+    int idx = (1 << p) - 1;
+    try {
+      int val = A.at(idx);
+      if (val == k)
+        return idx;
+      else if (val > k) {
         found = true;
       }
-      if (found)
-        break;
-    } else {
-      // low is already too high
-      --p;
-      break;
+    } catch (...) {
+      // out of bound :P
+      found = true;
     }
+    if (found)
+      break;
     ++p;
   }
   // ensure p>=0
   if (p < 0)
     p = 0;
-  int low = (1 << p) - 1;
-  int high = (1 << (p + 1)) - 1;
+  int low = p >= 0 ? (1 << (p - 1)) - 1 : 0;
+  int high = (1 << p) - 1;
   // stage 2: use that length to do binary search
   // Note that if the mid element access with exception, force go left
-  while (low < high) {
+  while (low <= high) {
     int mid = low + (high - low) / 2;
     try {
       int val = A.at(mid);
       if (val > k) {
         // too large
-        high = mid;
+        high = mid - 1;
       } else if (val < k) {
         // too small
         low = mid + 1;
@@ -64,7 +50,7 @@ int BinarySearchUnknownLength(const vector<int> &A, int k) {
       }
     } catch (...) {
       // mid too large
-      high = mid;
+      high = mid - 1;
     }
   }
   return -1;
