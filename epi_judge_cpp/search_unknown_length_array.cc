@@ -13,14 +13,51 @@ int BinarySearchUnknownLength(const vector<int> &A, int k) {
   while (!found) {
     // try access
     try {
-      int a = A.at(high);
-      // BE CAREFUL!!
-      // the direction of shift!
-      high <<= 1;
+      int val = A.at(high);
+      // EXTRA STEP: look at the value!
+      if (val > k) {
+        found = true;
+      } else if (val < k) {
+        // BE CAREFUL!!
+        // the direction of shift!
+        high <<= 1;
+      } else {
+        // high is k
+        return high;
+      }
     } catch (...) {
       // too large, stop
       found = true;
     }
+  }
+  // EXTRA STEP: make low higher
+  found = false;
+  while (!found && low < high) {
+    try {
+      int val = A.at(low);
+      if (val < k) {
+        // go higher!
+        if (!low)
+          low = 1;
+        else
+          low <<= 1;
+      } else if (val > k) {
+        // low too high
+        found = true;
+        // restore to prev
+        low >>= 1;
+      } else {
+        // we found...
+        return low;
+      }
+    } catch (...) {
+      // low too high
+      found = true;
+      low >>= 1;
+    }
+  }
+  if (low >= high) {
+    low >>= 1;
   }
   // stage 2: use that length to do binary search
   // Note that if the mid element access with exception, force go left
