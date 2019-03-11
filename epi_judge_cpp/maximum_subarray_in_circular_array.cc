@@ -16,6 +16,16 @@ int MaxSubarraySumInCircular(const vector<int> &A) {
   int maxWrap = 0;
   if (A.size() > 2) {
     // wraping is only meaningful when size of A is greater than 2
+    // in fact, just substract the min subarray, we got the circular max
+    int minSum = 0;
+    int curSum = 0;
+    for (int i = 0; i < A.size(); i++) {
+      curSum = min(curSum + A[i], A[i]);
+      minSum = min(curSum, minSum);
+    }
+    maxWrap = max(maxWrap, accumulate(A.begin(), A.end(), 0) - minSum);
+
+    /*
     // find 'no warp mininum subarray' along its start and end index
     int minSum = 0;
     int curSum = 0;
@@ -51,7 +61,7 @@ int MaxSubarraySumInCircular(const vector<int> &A) {
       maxWrap = max(maxWrap, maxSum + curSum);
       curSum += A[i];
     }
-    // maxWrap = max(maxWrap, accumulate(A.begin(), A.end(), 0) - minSum);
+    */
   }
   return max(maxNonWrap, maxWrap);
 }
