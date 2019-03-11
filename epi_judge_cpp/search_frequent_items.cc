@@ -20,25 +20,14 @@ SearchFrequentItems(int k, vector<string>::const_iterator stream_begin,
   auto currentIt = stream_begin;
   while (currentIt != stream_end) {
     auto &currentStr = *(currentIt++);
-    // update freq
-    auto it = candidateFreq.find(currentStr);
-    if (it != candidateFreq.end()) {
-      it->second++;
-    } else {
-      // not in
-      if (candidateFreq.size() < k) {
-        // new entry
-        candidateFreq[currentStr]++;
-      } else {
-        // size reached, try deleting
-        vector<string> toBeRemoved;
-        for (auto &data : candidateFreq) {
-          if (--data.second == 0) {
-            toBeRemoved.push_back(data.first);
-          }
-        }
-        for (auto &s : toBeRemoved) {
-          candidateFreq.erase(s);
+    candidateFreq[currentStr]++;
+    if (candidateFreq.size() == k) {
+      // size reached, try deleting
+      for (auto it = candidateFreq.begin(); it != candidateFreq.end();) {
+        if (--(it->second) == 0) {
+          it = candidateFreq.erase(it);
+        } else {
+          ++it;
         }
       }
     }
