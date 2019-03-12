@@ -1,6 +1,7 @@
 #include "test_framework/generic_test.h"
 #include <memory>
 #include <vector>
+using std::inplace_merge;
 using std::make_shared;
 using std::shared_ptr;
 using std::stable_sort;
@@ -74,7 +75,7 @@ struct Entry {
   int index;
 };
 
-int CountInversions(vector<int> A) {
+int CountInversionsIterative(vector<int> A) {
   vector<Entry> data;
   for (int i = 0; i < A.size(); i++) {
     data.push_back({A[i], i});
@@ -95,6 +96,38 @@ int CountInversions(vector<int> A) {
     tree.insert(ent.index);
   }
   return count;
+}
+
+// count inversion and sort them
+int globalCount;
+void CountInversionsHelper(vector<int> &A, int begin, int end) {
+  if (begin == end - 1)
+    return;
+  int mid = begin + (end - begin) / 2;
+  CountInversionsHelper(A, begin, mid);
+  CountInversionsHelper(A, mid, end);
+  // assume they are sorted
+  // count those first part > second part
+  // i: index of smallest number from left
+  // j: index of largest number from right
+  // so that: A[i] > A[j]
+  int count = 0;
+  int j = mid - 1; // points to the last valid j
+  for (int i = begin; i < mid; i++) {
+    // under this i , how many A[j] < A[i]?
+    while (j < end - 1 && A[j + 1] < A[i])
+      j++;
+    globalCount += j - mid + 1;
+  }
+  // merge it
+  inplace_merge(A.begin() + begin, A.begin() + mid, A.begin() + end);
+}
+
+// Recursive version
+int CountInversions(vector<int> A) {
+  globalCount = 0;
+  CountInversionsHelper(A, 0, A.size());
+  return globalCount;
 }
 
 int main(int argc, char *argv[]) {
