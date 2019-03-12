@@ -15,9 +15,10 @@ int FindLongestSubarrayLessEqualK(const vector<int> &A, int k) {
     // erase impossible i: prev num is  negative
     if (i > 0 && A[i - 1] <= 0)
       continue;
-    for (int j = i + maxValue; j < A.size(); j++) {
+    for (int j = A.size() - 1; j >= i + maxValue; j--) {
       if (prefix[j + 1] - prefix[i] <= k) {
         maxValue = max(maxValue, j - i + 1);
+        break;
       }
     }
   }
