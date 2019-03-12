@@ -1,17 +1,49 @@
-#include <map>
-#include <memory>
 #include "posting_list_node.h"
 #include "test_framework/generic_test.h"
 #include "test_framework/serialization_traits.h"
 #include "test_framework/test_failure.h"
 #include "test_framework/timed_executor.h"
+#include <map>
+#include <memory>
+#include <unordered_map>
 using std::make_shared;
 using std::shared_ptr;
+using std::unordered_map;
 
-shared_ptr<PostingListNode> CopyPostingsList(
-    const shared_ptr<PostingListNode>& l) {
-  // TODO - you fill in here.
-  return nullptr;
+shared_ptr<PostingListNode>
+CopyPostingsList(const shared_ptr<PostingListNode> &l) {
+  if (!l)
+    return nullptr;
+  // maintain a copied new
+  // map old to new
+  unordered_map<PostingListNode *, shared_ptr<PostingListNode>> oldToNew;
+  auto current = l;
+  auto newHead = make_shared<PostingListNode>(l->order, nullptr, nullptr);
+  oldToNew.insert(make_pair(l.get(), newHead));
+  auto currentHead = newHead;
+  auto LoadOrCreated =
+      [&](PostingListNode *oldPtr) -> shared_ptr<PostingListNode> {
+    if (!oldPtr)
+      return nullptr;
+    auto newIt = oldToNew.find(oldPtr);
+    if (newIt == oldToNew.end()) {
+      // create a new
+      auto newNode =
+          make_shared<PostingListNode>(oldPtr->order, nullptr, nullptr);
+      oldToNew.insert(make_pair(oldPtr, newNode));
+      return newNode;
+    } else {
+      return newIt->second;
+    }
+  };
+  while (current) {
+    // in this loop, assume current pointer existed
+    currentHead->jump = LoadOrCreated(current->jump).get();
+    currentHead->next = LoadOrCreated(current->next.get());
+    currentHead = currentHead->next;
+    current = current->next;
+  }
+  return newHead;
 }
 using PostingListPtr = std::shared_ptr<PostingListNode>;
 
@@ -24,8 +56,8 @@ template <>
 struct SerializationTraits<SerializedNode>
     : UserSerTraits<SerializedNode, int, int> {};
 
-PostingListPtr CreatePostingList(
-    const std::vector<SerializedNode>& serialized) {
+PostingListPtr
+CreatePostingList(const std::vector<SerializedNode> &serialized) {
   std::map<int, PostingListPtr> key_mapping;
   PostingListPtr head;
   for (auto it = rbegin(serialized); it != rend(serialized); ++it) {
@@ -37,15 +69,16 @@ PostingListPtr CreatePostingList(
        ++it, list_it = list_it->next) {
     if (it->jump_index != -1) {
       list_it->jump = key_mapping[it->jump_index].get();
-      if (!list_it->jump) throw std::runtime_error("Jump index out of range");
+      if (!list_it->jump)
+        throw std::runtime_error("Jump index out of range");
     }
   }
 
   return head;
 }
 
-void AssertListsEqual(const PostingListPtr& orig, const PostingListPtr& copy) {
-  std::map<PostingListNode*, PostingListNode*> node_mapping;
+void AssertListsEqual(const PostingListPtr &orig, const PostingListPtr &copy) {
+  std::map<PostingListNode *, PostingListNode *> node_mapping;
   auto o_it = orig;
   auto c_it = copy;
   while (o_it) {
@@ -79,8 +112,8 @@ void AssertListsEqual(const PostingListPtr& orig, const PostingListPtr& copy) {
   }
 }
 
-void CopyPostingsListWrapper(TimedExecutor& executor,
-                             const std::vector<SerializedNode>& l) {
+void CopyPostingsListWrapper(TimedExecutor &executor,
+                             const std::vector<SerializedNode> &l) {
   auto head = CreatePostingList(l);
 
   auto copy = executor.Run([&] { return CopyPostingsList(head); });
@@ -88,7 +121,7 @@ void CopyPostingsListWrapper(TimedExecutor& executor,
   AssertListsEqual(head, copy);
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   std::vector<std::string> args{argv + 1, argv + argc};
   std::vector<std::string> param_names{"executor", "l"};
   return GenericTestMain(args, "copy_posting_list.cc", "copy_posting_list.tsv",
