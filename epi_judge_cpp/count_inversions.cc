@@ -15,8 +15,8 @@ struct BstNode {
       : value(value), count(count), left(left), right(right) {}
 };
 
-struct Bst {
-
+class Bst {
+public:
   void insert(int val) {
     if (!root) {
       root = make_shared<BstNode>(val);
@@ -47,21 +47,25 @@ struct Bst {
     }
   }
 
-  int countLargerThan(int val, shared_ptr<BstNode> current) {
-    if (!current)
-      return 0;
-    if (val > current->value) {
-      // go right directly
-      return countLargerThan(val, current->right);
-    } else {
-      // val < current->value
-      int rightCount = current->right ? current->right->count : 0;
-      return 1 + rightCount + countLargerThan(val, current->left);
+  int countLargerThan(int val) {
+    int count = 0;
+    auto current = root;
+    while (current) {
+      if (val > current->value) {
+        // go right directly
+        current = current->right;
+      } else {
+        // go left and record right value
+        // val < current->value
+        int rightCount = current->right ? current->right->count : 0;
+        count += 1 + rightCount;
+        current = current->left;
+      }
     }
+    return count;
   }
 
-  int countLargerThan(int val) { return countLargerThan(val, root); }
-
+private:
   shared_ptr<BstNode> root = nullptr;
 };
 
