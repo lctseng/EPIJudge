@@ -1,8 +1,30 @@
 #include "test_framework/generic_test.h"
 #include <vector>
+using std::accumulate;
+using std::max;
 using std::vector;
 
 int CalculateBonus(const vector<int> &productivity) {
+  // simple solution but space is O(n)
+  // scan from left to right, make sure increasing order holds
+  int sz = productivity.size();
+  vector<int> tickets(sz, 1);
+  for (int i = 1; i < sz; i++) {
+    if (productivity[i] > productivity[i - 1]) {
+      tickets[i] = tickets[i - 1] + 1;
+    }
+  }
+  // right to left
+  for (int i = sz - 2; i >= 0; i--) {
+    if (productivity[i] > productivity[i + 1]) {
+      tickets[i] = max(tickets[i], tickets[i + 1] + 1);
+    }
+  }
+  return accumulate(tickets.begin(), tickets.end(), 0);
+}
+
+// Fastest! One pass and O(1) space
+int CalculateBonusConstantSpace(const vector<int> &productivity) {
   int current = 0;
   int total = 0;
   int lastPeakIndex = -1;
@@ -12,7 +34,7 @@ int CalculateBonus(const vector<int> &productivity) {
     if ((i == 0 || productivity[i] > productivity[i - 1]) &&
         (i == productivity.size() - 1 ||
          productivity[i] >= productivity[i + 1])) {
-      // this is a peak
+      // this is a first-half strictly increasing peak
       current++;
       total += current;
       lastPeakIndex = i;
