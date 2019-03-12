@@ -14,6 +14,42 @@ shared_ptr<PostingListNode>
 CopyPostingsList(const shared_ptr<PostingListNode> &l) {
   if (!l)
     return nullptr;
+  // create copied node next to me
+  auto current = l;
+  while (current) {
+    auto next = current->next;
+    auto newCurrent =
+        make_shared<PostingListNode>(current->order, next, nullptr);
+    current->next = newCurrent;
+    current = next;
+  }
+  // cross updating jump
+  current = l;
+  while (current) {
+    // BE CAREFUL!
+    // current jump may not exists!
+    if (current->jump) {
+      current->next->jump = current->jump->next.get();
+    }
+    current = current->next->next;
+  }
+  // split lists
+  auto dummyHead = make_shared<PostingListNode>(0, nullptr, nullptr);
+  auto newCurrent = dummyHead;
+  current = l;
+  while (current) {
+    newCurrent->next = current->next;
+    newCurrent = newCurrent->next;
+    current->next = current->next->next;
+    current = current->next;
+  }
+  return dummyHead->next;
+}
+
+shared_ptr<PostingListNode>
+CopyPostingsListHashTable(const shared_ptr<PostingListNode> &l) {
+  if (!l)
+    return nullptr;
   // maintain a copied new
   // map old to new
   unordered_map<PostingListNode *, shared_ptr<PostingListNode>> oldToNew;
