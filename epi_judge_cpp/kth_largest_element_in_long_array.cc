@@ -1,13 +1,34 @@
 #include "test_framework/generic_test.h"
 #include <set>
 #include <vector>
+using std::greater;
 using std::multiset;
+using std::nth_element;
 using std::prev;
 using std::vector;
 
 int FindKthLargestUnknownLength(vector<int>::const_iterator stream_begin,
                                 const vector<int>::const_iterator &stream_end,
                                 int k) {
+  // keep currently kth largest in the array
+  vector<int> buffer;
+  while (stream_begin != stream_end) {
+    buffer.push_back(*(stream_begin++));
+    if (buffer.size() == 2 * k) {
+      nth_element(buffer.begin(), buffer.begin() + (k - 1), buffer.end(),
+                  greater<int>());
+      buffer.resize(k);
+    }
+  }
+  // last update
+  nth_element(buffer.begin(), buffer.begin() + (k - 1), buffer.end(),
+              greater<int>());
+  return buffer[k - 1];
+}
+
+int FindKthLargestUnknownLengthHeap(
+    vector<int>::const_iterator stream_begin,
+    const vector<int>::const_iterator &stream_end, int k) {
   multiset<int> candidates;
   while (stream_begin != stream_end) {
     int cur = *(stream_begin++);
