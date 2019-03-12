@@ -4,17 +4,19 @@ using std::vector;
 
 int FindElementAppearsOnce(const vector<int> &A) {
   const int BIT_SIZE = 32;
+  int bitCount[BIT_SIZE] = {0};
+  for (int val : A) {
+    for (int i = 0; i < BIT_SIZE; i++) {
+      // BE CAREFUL!
+      // must use != 0, cannot use >0 since it may be the sign bit!
+      bitCount[i] += (val & (1 << i)) != 0;
+    }
+  }
+  // reconstruct that num
   int res = 0;
   for (int i = 0; i < BIT_SIZE; i++) {
-    int mask = 1 << i;
-    int count = 0;
-    for (int val : A) {
-      if (val & mask) {
-        ++count;
-      }
-    }
-    if (count % 3) {
-      res |= mask;
+    if (bitCount[i] % 3) {
+      res |= 1 << i;
     }
   }
   return res;
