@@ -3,10 +3,12 @@
 #include "test_framework/test_failure.h"
 #include "test_framework/timed_executor.h"
 #include <iterator>
+#include <map>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
+using std::map;
 using std::string;
 using std::swap;
 using std::unordered_map;
@@ -17,32 +19,65 @@ struct Person {
   string name;
 };
 
-void GroupByAge(vector<Person> *people) {
-  unordered_map<int, int> ageCount;
-  for (auto &person : *people) {
-    ageCount[person.age]++;
+// sorted version: O(n + mlogm)
+void GroupByAge(vector<Person> *peoplePtr) {
+  auto &people = *peoplePtr;
+  // count the number of element, accumulate the offset
+  map<int, int> elementCount;
+  for (auto &person : people) {
+    elementCount[person.age]++;
   }
-  // compute end-offset by accumulating
-  unordered_map<int, int> ageOffset;
-  int currentOffset = 0;
-  for (auto it = ageCount.begin(); it != ageCount.end(); ++it) {
-    ageOffset[it->first] = currentOffset;
-    currentOffset += it->second;
+  int offset = 0;
+  unordered_map<int, int> elementOffset;
+  for (auto &dataPair : elementCount) {
+    elementOffset[dataPair.first] = offset;
+    offset += dataPair.second;
   }
-  // update in-place
-  while (ageOffset.size()) {
-    // move the person occupied at from to its correct position
-    auto from = ageOffset.begin();
-    auto personAgeToMove = (*people)[from->second].age;
-    auto &toIndex = ageOffset[personAgeToMove];
-    swap(people->at(from->second), people->at(toIndex));
-    if (--ageCount[personAgeToMove] > 0) {
-      ++toIndex;
+  // in-place counting sort
+  // while is not empty
+  while (elementOffset.size()) {
+    // extract a number and its target position
+    int from = elementOffset.begin()->second;
+    int ageToMove = people[from].age;
+    int to = elementOffset[ageToMove];
+    // move the element in my target to the right place
+    swap(people[from], people[to]);
+    // increment the offset, decrease the counter, remove if zero
+    if (--elementCount[ageToMove] == 0) {
+      elementOffset.erase(ageToMove);
     } else {
-      ageOffset.erase(personAgeToMove);
+      elementOffset[ageToMove]++;
     }
   }
 }
+
+// void GroupByAge(vector<Person> *people) {
+//   unordered_map<int, int> ageCount;
+//   for (auto &person : *people) {
+//     ageCount[person.age]++;
+//   }
+//   // compute end-offset by accumulating
+//   unordered_map<int, int> ageOffset;
+//   int currentOffset = 0;
+//   for (auto it = ageCount.begin(); it != ageCount.end(); ++it) {
+//     ageOffset[it->first] = currentOffset;
+//     currentOffset += it->second;
+//   }
+//   // update in-place
+//   while (ageOffset.size()) {
+//     // move the person occupied at from to its correct position
+//     auto from = ageOffset.begin();
+//     auto personAgeToMove = (*people)[from->second].age;
+//     auto &toIndex = ageOffset[personAgeToMove];
+//     swap(people->at(from->second), people->at(toIndex));
+//     if (--ageCount[personAgeToMove] > 0) {
+//       ++toIndex;
+//     } else {
+//       ageOffset.erase(personAgeToMove);
+//     }
+//   }
+// }
+
 template <>
 struct SerializationTraits<Person> : UserSerTraits<Person, int, string> {};
 
