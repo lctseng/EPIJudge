@@ -26,3 +26,4 @@ epi_judge_java/java_build/
 # Local
 a.out
 .DS_Store
+.vscode
