@@ -12,16 +12,16 @@ struct HighwaySection {
   int x, y, distance;
 };
 
-HighwaySection FindBestProposals(const vector<HighwaySection> &H,
-                                 const vector<HighwaySection> &P, int n) {
-  // apply FW first: O(n^3)
-  // to save time: the distance valid for i -> j where i < j
-  vector<vector<int>> distance(n, vector<int>(n, INT_MAX));
-  // init FW
+typedef HighwaySection Edge;
+vector<vector<int>> AllPairShortestPath(int n, const vector<Edge> &graph) {
+  // use every point as middle point
+  // try every pair of point
+  vector<vector<int>> distance(n,
+                               vector<int>(n, std::numeric_limits<int>::max()));
+  // init
   for (int i = 0; i < n; i++) {
     distance[i][i] = 0;
   }
-  // insert known distance
   auto getDistanceEntry = [&](int i, int j) -> int & {
     if (i > j) {
       return distance[j][i];
@@ -29,27 +29,41 @@ HighwaySection FindBestProposals(const vector<HighwaySection> &H,
       return distance[i][j];
     }
   };
-  for (auto &section : H) {
-    getDistanceEntry(section.x, section.y) = section.distance;
+  // BE CAEREFUL! init by edges
+  for (auto &edge : graph) {
+    getDistanceEntry(edge.x, edge.y) = edge.distance;
   }
-  // start dp
+  // try every mid point
   for (int k = 0; k < n; k++) {
-    for (int i = 0; i < n - 1; i++) {
-      for (int j = i + 1; j < n; j++) {
-        // go through k
-        int ik = getDistanceEntry(i, k);
-        if (ik == INT_MAX)
-          continue;
-        int kj = getDistanceEntry(k, j);
-        if (kj == INT_MAX)
-          continue;
-        int &ij = getDistanceEntry(i, j);
-        if (ik + kj < ij) {
-          ij = ik + kj;
+    // iterate every pair of node
+    for (int a = 0; a < n - 1; a++) {
+      for (int b = a + 1; b < n; b++) {
+        // try a->k->b < a->b?
+        int &ak = getDistanceEntry(a, k);
+        int &kb = getDistanceEntry(k, b);
+        int &ab = getDistanceEntry(a, b);
+        if (ak < std::numeric_limits<int>::max() &&
+            kb < std::numeric_limits<int>::max() && ak + kb < ab) {
+          ab = ak + kb;
         }
       }
     }
   }
+  //
+  return distance;
+}
+
+HighwaySection FindBestProposals(const vector<HighwaySection> &H,
+                                 const vector<HighwaySection> &P, int n) {
+  // apply FW first: O(n^3)
+  auto distance = AllPairShortestPath(n, H);
+  auto getDistanceEntry = [&](int i, int j) -> int & {
+    if (i > j) {
+      return distance[j][i];
+    } else {
+      return distance[i][j];
+    }
+  };
   // for every proposal, try every pair that walk through it
   // O(k*n^2)
   HighwaySection maxSection;
