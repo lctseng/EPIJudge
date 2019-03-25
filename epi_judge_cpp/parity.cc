@@ -1,5 +1,6 @@
 #include "test_framework/generic_test.h"
 short Parity(unsigned long long x) {
+  // x is 64 bit
   x ^= x >> 32;
   x ^= x >> 16;
   x ^= x >> 8;
