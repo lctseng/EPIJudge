@@ -17,39 +17,46 @@ bool IsMatch(const string &haystack, const string &needle, int begin) {
 }
 
 int RabinKarp(const string &haystack, const string &needle) {
-  // edge case
-  if (needle.length() > haystack.length())
+  if (haystack.length() < needle.length())
     return -1;
-  // hash function: use base26 number
-  // step 1 compute hash for haystack and needle
-  const int BASE = 26;
-  // dont care for overflow
-  unsigned hashHaystack = 0;
-  unsigned hashNeedle = 0;
-  unsigned power = 1; // use to rolliing update haystack
+  if (needle.empty())
+    return 0;
+  // now length of haystack is >= needle
+  // use base 26 unsigned to compute the hash
+  // compute hash for needle and first part of haystack
+  // and compute the MSB power
+  const unsigned BASE = 26;
+  unsigned power = 1;
+  unsigned hashHaystack = 0, hashNeedle = 0;
   for (int i = 0; i < needle.length(); i++) {
-    if (i > 0)
-      power = power * 26;
     hashHaystack = hashHaystack * BASE + haystack[i];
     hashNeedle = hashNeedle * BASE + needle[i];
+    power = power * BASE;
   }
-  for (int i = needle.length(); i < haystack.length(); i++) {
-    // compare first
-    if (hashHaystack == hashNeedle &&
-        IsMatch(haystack, needle, i - needle.length())) {
-      return i - needle.length();
+  // helper: match partial haystack
+  // BE CAREFUL ! the matching function
+  auto IsMatch = [&](int begin) {
+    for (int i = 0; i < needle.length(); i++) {
+      if (haystack[begin + i] != needle[i])
+        return false;
     }
-    // update haystack hash later
-    // remove existing
-    hashHaystack -= haystack[i - needle.length()] * power;
+    return true;
+  };
+  // check first
+  if (hashHaystack == hashNeedle && IsMatch(0)) {
+    return 0;
+  }
+  // iterate
+  for (int i = needle.length(); i < haystack.length(); i++) {
+    // add next char first, and cut by power later
     hashHaystack = hashHaystack * BASE + haystack[i];
+    hashHaystack -= power * haystack[i - needle.length()];
+    // check later
+    if (hashHaystack == hashNeedle && IsMatch(i - needle.length() + 1)) {
+      return i - needle.length() + 1;
+    }
   }
-  // match final
-  if (hashHaystack == hashNeedle &&
-      IsMatch(haystack, needle, haystack.length() - needle.length())) {
-    return haystack.length() - needle.length();
-  }
-  // not found
+  // no last update: we checked first
   return -1;
 }
 
