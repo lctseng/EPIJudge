@@ -57,9 +57,25 @@ bool IsBinaryTreeBSTIterative(const unique_ptr<BinaryTreeNode<int>> &tree) {
   return true;
 }
 
+// bool IsBinaryTreeBST(const unique_ptr<BinaryTreeNode<int>> &tree) {
+//   // return IsBinaryTreeBSTHelper(tree).isBST;
+//   return IsBinaryTreeBSTIterative(tree);
+// }
+
+// solve it recursively
+bool IsBinaryTreeBSTRecursiveHelper(const unique_ptr<BinaryTreeNode<int>> &tree,
+                                    int lower, int upper) {
+  if (!tree)
+    return true;
+  if (tree->data < lower || tree->data > upper)
+    return false;
+  // current node fit
+  return IsBinaryTreeBSTRecursiveHelper(tree->left, lower, tree->data) &&
+         IsBinaryTreeBSTRecursiveHelper(tree->right, tree->data, upper);
+}
+
 bool IsBinaryTreeBST(const unique_ptr<BinaryTreeNode<int>> &tree) {
-  // return IsBinaryTreeBSTHelper(tree).isBST;
-  return IsBinaryTreeBSTIterative(tree);
+  return IsBinaryTreeBSTRecursiveHelper(tree, INT_MIN, INT_MAX);
 }
 
 int main(int argc, char *argv[]) {
