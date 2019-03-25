@@ -7,18 +7,19 @@ using std::vector;
 vector<int> GeneratePrimes(int n) {
   if (n < 2)
     return {};
-  vector<bool> notPrime(n, false);
-  vector<int> res = {2};
-  for (int i = 3; i <= n; i += 2) {
-    if (!notPrime[i >> 1]) {
-      res.push_back(i);
-      // mark future entries
-      if (i <= n / i) { // Overflow check: this means n <= i * i
-        int i2 = i * i;
-        while (i2 <= n) {
-          notPrime[i2 >> 1] = true;
-          i2 += 2 * i;
-        }
+  // use array to mark
+  // BE CAREFUL the size must +1
+  vector<bool> isPrime(n / 2 + 1, true); // entry i stands for 2*i + 1
+  vector<int> res(1, 2);
+  int maxI = (n + 1) / 2 - 1;
+  for (int i = 1; i <= maxI; i++) {
+    if (isPrime[i]) {
+      int val = 2 * i + 1;
+      res.push_back(val);
+      // sieve upto n
+      for (long long int j = (long long int)val * val; j <= n; j += val) {
+        if (j & 1)
+          isPrime[j >> 1] = false;
       }
     }
   }
