@@ -2,39 +2,37 @@
 #include <limits>
 #include <vector>
 using std::vector;
-
 bool BFNegativeCycleDetection(vector<vector<double>> &graph, int src) {
-  int nodeNum = graph.size();
-  vector<double> distanceToSource(nodeNum, std::numeric_limits<double>::max());
-  distanceToSource[src] = 0;
-  // perorm nodeNum - 1 time relaxation
-  for (int i = 1; i < nodeNum; i++) {
-    // try each edge
-    bool haveUpdated = false;
-    for (int a = 0; a < nodeNum; a++) {
-      for (int b = 0; b < nodeNum; b++) {
-        // d[a] + w[a][b] <=> d[b]
-        if (distanceToSource[a] + graph[a][b] < distanceToSource[b]) {
-          distanceToSource[b] = distanceToSource[a] + graph[a][b];
-          haveUpdated = true;
+  int V = graph.size();
+  vector<double> distanceToSrc(V, std::numeric_limits<double>::max());
+  distanceToSrc[src] = 0;
+  // perform V-1 relaxation
+  // to find single-source shortest path
+  for (int v = 1; v < V; v++) {
+    bool hasUpdate = false;
+    for (int i = 0; i < V; i++) {
+      for (int j = 0; j < V; j++) {
+        // if src can reach i
+        // try go this to update distance to j
+        if (distanceToSrc[i] + graph[i][j] < distanceToSrc[j]) {
+          distanceToSrc[j] = distanceToSrc[i] + graph[i][j];
+          hasUpdate = true;
         }
       }
     }
-    if (!haveUpdated) {
-      // does not update since this relaxation: stable
-      // impossible to have negative cycle
+    // if no update in one relaxation, no negative cycle
+    if (!hasUpdate)
       return false;
-    }
   }
-  // try again relaxation, if can, means negative cycle exists
-  for (int a = 0; a < nodeNum; a++) {
-    for (int b = 0; b < nodeNum; b++) {
-      // d[a] + w[a][b] <=> d[b]
-      if (distanceToSource[a] + graph[a][b] < distanceToSource[b]) {
+  // after V-1 times, perform one more time
+  for (int i = 0; i < V; i++) {
+    for (int j = 0; j < V; j++) {
+      if (distanceToSrc[i] + graph[i][j] < distanceToSrc[j]) {
         return true;
       }
     }
   }
+  // if any, we have negative cycle
   return false;
 }
 
