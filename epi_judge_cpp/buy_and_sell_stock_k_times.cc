@@ -4,36 +4,45 @@ using std::max;
 using std::min;
 using std::vector;
 
-double BuyAndSellStockKTimes(const vector<double> &prices, int k) {
-  // edge case: empty
-  if (k == 0 || prices.empty())
-    return 0.0;
-  if (k >= prices.size() / 2) {
-    // simple sum
+// O(NK) time, O(K) space
+double BuyAndSellStockKTimes(const vector<double> &prices, int K) {
+  if (prices.empty() || K == 0)
+    return 0;
+  int N = prices.size();
+  // BE CAREFUL! extremely large K
+  if (K >= N / 2) {
+    // buy all increasing edge
+    // BE CAREFUL the type
     double sum = 0;
-    for (int i = 0; i < prices.size() - 1; i++) {
-      double diff = prices[i + 1] - prices[i];
-      if (diff > 0) {
+    for (int i = 1; i < N; i++) {
+      double diff = prices[i] - prices[i - 1];
+      if (diff > 0)
         sum += diff;
-      }
     }
     return sum;
   }
-  // buy[i][j]: max profit end in buy in [0:i] days and max j times
-  vector<double> buy(k + 1);
-  vector<double> sell(k + 1);
-  for (int i = 0; i <= k; i++) {
-    buy[i] = -prices[0];
-  }
-  for (int i = 1; i < prices.size(); i++) {
-    for (int j = 1; j <= k; j++) {
-      double nextBuy = max(buy[j], sell[j - 1] - prices[i]);
-      double nextSell = max(sell[j], buy[j] + prices[i]);
-      buy[j] = nextBuy;
-      sell[j] = nextSell;
+  // two-state dp
+  // buy[i][k]: consider prices[0:i) and exactly done k buys, with final
+  // operation is BUY init condition:
+  // → buy[0][~] = INT_MIN
+  // → sell[0][~] = 0
+
+  vector<double> buy(K + 1, -std::numeric_limits<double>::infinity());
+  vector<double> sell(K + 1, 0);
+  // i from 1 to price.size(),k from 1 to K
+  for (int i = 1; i <= N; i++) {
+    for (int k = 1; k <= K; k++) {
+      // do not update inplace, avoid interference
+      double nextBuy = max(buy[k], sell[k - 1] - prices[i - 1]);
+      double nextSell = max(sell[k], buy[k] + prices[i - 1]);
+      buy[k] = nextBuy;
+      sell[k] = nextSell;
     }
   }
-  return sell[k];
+  // buy[i][k] = max(buy[i-1][k], sell[i-1][k-1] - prices[i-1]);
+  // sell[i][k] = max(sell[i-1][k], buy[i-1][k] + prices[i-1]);
+  // answer is sell[prices.size()][K]
+  return sell[K];
 }
 
 double BuyAndSellStockKTimesPrecise(const vector<double> &prices, int k) {
