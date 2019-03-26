@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+using std::greater;
 using std::make_pair;
 using std::multimap;
 using std::string;
@@ -12,32 +13,28 @@ using std::unordered_map;
 class ClientsCreditsInfo {
 public:
   void Insert(const string &client_id, int c) {
-    auto oldIt = clientTreeMap.find(client_id);
-    if (oldIt != clientTreeMap.end()) {
-      // remove prev entry
-      creditMap.erase(oldIt->second);
-    }
+    int adjustedC = c - globalOffset;
+    // erase old if existed
+    Remove(client_id);
     // add new
-    auto it = creditMap.insert(make_pair(c - globalOffset, client_id));
-    if (oldIt != clientTreeMap.end()) {
-      oldIt->second = it;
-    } else {
-      clientTreeMap[client_id] = it;
-    }
+    auto treeIt = creditToClient.insert(make_pair(adjustedC, client_id));
+    clientToTreeIt[client_id] = treeIt;
   }
   bool Remove(const string &client_id) {
-    auto oldIt = clientTreeMap.find(client_id);
-    if (oldIt != clientTreeMap.end()) {
-      creditMap.erase(oldIt->second);
-      clientTreeMap.erase(oldIt);
+    auto hashIt = clientToTreeIt.find(client_id);
+    if (hashIt != clientToTreeIt.end()) {
+      // remove tree
+      creditToClient.erase(hashIt->second);
+      clientToTreeIt.erase(hashIt);
       return true;
     } else {
       return false;
     }
   }
+  // BE CAREFUL! to add offset
   int Lookup(const string &client_id) const {
-    auto hashIt = clientTreeMap.find(client_id);
-    if (hashIt != clientTreeMap.end()) {
+    auto hashIt = clientToTreeIt.find(client_id);
+    if (hashIt != clientToTreeIt.end()) {
       return hashIt->second->first + globalOffset;
     } else {
       return -1;
@@ -45,16 +42,65 @@ public:
   }
   void AddAll(int C) { globalOffset += C; }
   string Max() const {
-    if (creditMap.empty())
-      return "";
-    return prev(creditMap.end())->second;
+    if (creditToClient.size()) {
+      return creditToClient.begin()->second;
+    } else {
+      return 0;
+    }
   }
 
 private:
+  multimap<int, string, greater<int>> creditToClient;
+  unordered_map<string, multimap<int, string>::iterator> clientToTreeIt;
   int globalOffset = 0;
-  multimap<int, string> creditMap;
-  unordered_map<string, multimap<int, string>::iterator> clientTreeMap;
 };
+
+// class ClientsCreditsInfo {
+// public:
+//   void Insert(const string &client_id, int c) {
+//     auto oldIt = clientTreeMap.find(client_id);
+//     if (oldIt != clientTreeMap.end()) {
+//       // remove prev entry
+//       creditMap.erase(oldIt->second);
+//     }
+//     // add new
+//     auto it = creditMap.insert(make_pair(c - globalOffset, client_id));
+//     if (oldIt != clientTreeMap.end()) {
+//       oldIt->second = it;
+//     } else {
+//       clientTreeMap[client_id] = it;
+//     }
+//   }
+//   bool Remove(const string &client_id) {
+//     auto oldIt = clientTreeMap.find(client_id);
+//     if (oldIt != clientTreeMap.end()) {
+//       creditMap.erase(oldIt->second);
+//       clientTreeMap.erase(oldIt);
+//       return true;
+//     } else {
+//       return false;
+//     }
+//   }
+//   int Lookup(const string &client_id) const {
+//     auto hashIt = clientTreeMap.find(client_id);
+//     if (hashIt != clientTreeMap.end()) {
+//       return hashIt->second->first + globalOffset;
+//     } else {
+//       return -1;
+//     }
+//   }
+//   void AddAll(int C) { globalOffset += C; }
+//   string Max() const {
+//     if (creditMap.empty())
+//       return "";
+//     return prev(creditMap.end())->second;
+//   }
+
+// private:
+//   int globalOffset = 0;
+//   multimap<int, string> creditMap;
+//   unordered_map<string, multimap<int, string>::iterator> clientTreeMap;
+// };
 struct Operation {
   std::string op;
   std::string s_arg;
