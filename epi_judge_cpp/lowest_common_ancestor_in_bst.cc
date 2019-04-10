@@ -11,14 +11,11 @@ using std::unique_ptr;
 BstNode<int> *FindLCA(const unique_ptr<BstNode<int>> &tree,
                       const unique_ptr<BstNode<int>> &s,
                       const unique_ptr<BstNode<int>> &b) {
-  if (!tree || tree == s || tree == b)
-    return tree.get();
-
+  // MUST exists
   BstNode<int> *current = tree.get();
   while (true) {
-    if (!current || current == s.get() || current == b.get()) {
+    if (current == s.get() || current == b.get())
       return current;
-    }
     if (s->data > current->data && b->data > current->data) {
       current = current->right.get();
     } else if (s->data < current->data && b->data < current->data) {
@@ -28,6 +25,7 @@ BstNode<int> *FindLCA(const unique_ptr<BstNode<int>> &tree,
     }
   }
 }
+
 int LcaWrapper(TimedExecutor &executor,
                const std::unique_ptr<BstNode<int>> &tree, int key0, int key1) {
   const unique_ptr<BstNode<int>> &node0 = MustFindNode(tree, key0);
