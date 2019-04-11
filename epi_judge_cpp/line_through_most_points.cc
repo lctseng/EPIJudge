@@ -14,6 +14,8 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
+// new sol
+
 struct Point {
   int x, y;
 };
@@ -23,7 +25,24 @@ struct Line {
   pair<int, int> intercept;
 };
 
-pair<int, int> makeSimplestPair(int a, int b) {
+bool operator==(const Line &l1, const Line &l2) {
+  return l1.slope == l2.slope && l1.intercept == l2.intercept;
+}
+
+template <> struct std::hash<pair<int, int>> {
+  size_t operator()(const pair<int, int> &p) const {
+    return (std::hash<int>{}(p.first) << 1) ^ std::hash<int>{}(p.second);
+  }
+};
+
+template <> struct std::hash<Line> {
+  size_t operator()(const Line &L) const {
+    return (std::hash<pair<int, int>>{}(L.slope) << 1) ^
+           (std::hash<pair<int, int>>{}(L.intercept));
+  }
+};
+
+pair<int, int> makeSimplest(int a, int b) {
   int common = gcd(a, b);
   // divide
   if (common != 0) {
@@ -37,58 +56,119 @@ pair<int, int> makeSimplestPair(int a, int b) {
   return make_pair(a, b);
 }
 
-Line ComputeLineForTwoPoint(const Point &p1, const Point &p2) {
-  Line l;
+Line makeLine(const Point &p1, const Point &p2) {
   int x_diff = p2.x - p1.x;
-  int y_diff = p2.y - p1.y;
   if (x_diff == 0) {
     // verticle line
-    l.slope = make_pair(1, 0);
-    l.intercept = make_pair(p1.x, 0);
+    return {{1, 0}, {p1.x, 0}};
   } else {
-    l.slope = makeSimplestPair(y_diff, x_diff);
-    int upper = p2.x * p1.y - p1.x * p2.y;
-    l.intercept = makeSimplestPair(upper, x_diff);
+    return {makeSimplest(p2.y - p1.y, x_diff),
+            makeSimplest(p2.x * p1.y - p1.x * p2.y, x_diff)};
   }
-  return l;
 }
-
-bool operator==(const Line &l1, const Line &l2) {
-  return l1.slope == l2.slope && l1.intercept == l2.intercept;
-}
-
-template <> struct hash<pair<int, int>> {
-  size_t operator()(const pair<int, int> &p) const {
-    return (hash<int>{}(p.first) << 1) ^ hash<int>{}(p.second);
-  }
-};
-
-template <> struct hash<Line> {
-  size_t operator()(const Line &L) const {
-    return (hash<pair<int, int>>{}(L.slope) << 1) ^
-           (hash<pair<int, int>>{}(L.intercept));
-  }
-};
 
 int FindLineWithMostPoints(const vector<Point> &points) {
-  if (points.size() <= 2)
+  // create a set of line
+  // for every two point, create a line, make it simplest, insert to map
+  int n = points.size();
+  if (n <= 2)
     return points.size();
-  unordered_map<Line, unordered_set<int>> lineToPoints;
-  // for very two pair of point, compute y = ax + b line, store into hashMap
-  for (int i = 0; i < size(points) - 1; i++) {
-    for (int j = i + 1; j < size(points); j++) {
-      auto &pointSet =
-          lineToPoints[ComputeLineForTwoPoint(points[i], points[j])];
+  unordered_map<Line, unordered_set<int>> lineMap;
+  for (int i = 0; i < n - 1; i++) {
+    for (int j = i + 1; j < n; j++) {
+      auto &pointSet = lineMap[makeLine(points[i], points[j])];
       pointSet.insert(i);
       pointSet.insert(j);
     }
   }
+  // find max
   int maxValue = 0;
-  for (auto &data : lineToPoints) {
-    maxValue = max(maxValue, (int)(data.second.size()));
+  for (auto &dataPair : lineMap) {
+    maxValue = max(maxValue, (int)dataPair.second.size());
   }
+
   return maxValue;
 }
+
+// end new sol
+
+// Prev Backup
+// struct Point {
+//   int x, y;
+// };
+
+// struct Line {
+//   pair<int, int> slope;
+//   pair<int, int> intercept;
+// };
+
+// pair<int, int> makeSimplestPair(int a, int b) {
+//   int common = gcd(a, b);
+//   // divide
+//   if (common != 0) {
+//     a /= common;
+//     b /= common;
+//   }
+//   // sign fix
+//   if (b < 0) {
+//     a = -a, b = -b;
+//   }
+//   return make_pair(a, b);
+// }
+
+// Line ComputeLineForTwoPoint(const Point &p1, const Point &p2) {
+//   Line l;
+//   int x_diff = p2.x - p1.x;
+//   int y_diff = p2.y - p1.y;
+//   if (x_diff == 0) {
+//     // verticle line
+//     l.slope = make_pair(1, 0);
+//     l.intercept = make_pair(p1.x, 0);
+//   } else {
+//     l.slope = makeSimplestPair(y_diff, x_diff);
+//     int upper = p2.x * p1.y - p1.x * p2.y;
+//     l.intercept = makeSimplestPair(upper, x_diff);
+//   }
+//   return l;
+// }
+
+// bool operator==(const Line &l1, const Line &l2) {
+//   return l1.slope == l2.slope && l1.intercept == l2.intercept;
+// }
+
+// template <> struct hash<pair<int, int>> {
+//   size_t operator()(const pair<int, int> &p) const {
+//     return (hash<int>{}(p.first) << 1) ^ hash<int>{}(p.second);
+//   }
+// };
+
+// template <> struct hash<Line> {
+//   size_t operator()(const Line &L) const {
+//     return (hash<pair<int, int>>{}(L.slope) << 1) ^
+//            (hash<pair<int, int>>{}(L.intercept));
+//   }
+// };
+
+// int FindLineWithMostPoints(const vector<Point> &points) {
+//   if (points.size() <= 2)
+//     return points.size();
+//   unordered_map<Line, unordered_set<int>> lineToPoints;
+//   // for very two pair of point, compute y = ax + b line, store into
+//   hashMap for (int i = 0; i < size(points) - 1; i++) {
+//     for (int j = i + 1; j < size(points); j++) {
+//       auto &pointSet =
+//           lineToPoints[ComputeLineForTwoPoint(points[i], points[j])];
+//       pointSet.insert(i);
+//       pointSet.insert(j);
+//     }
+//   }
+//   int maxValue = 0;
+//   for (auto &data : lineToPoints) {
+//     maxValue = max(maxValue, (int)(data.second.size()));
+//   }
+//   return maxValue;
+// }
+
 template <>
 struct SerializationTraits<Point> : UserSerTraits<Point, int, int> {};
 
