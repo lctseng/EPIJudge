@@ -10,21 +10,47 @@ using std::vector;
 int FindKthLargestUnknownLength(vector<int>::const_iterator stream_begin,
                                 const vector<int>::const_iterator &stream_end,
                                 int k) {
-  // keep currently kth largest in the array
-  vector<int> buffer;
+  // keep 2k buffer
+  vector<int> buf(2 * k);
+  // read first k
+  for (int i = 0; i < k; i++) {
+    buf[i] = *(stream_begin++);
+  }
+  // while not end
+  int writeIndex = k;
   while (stream_begin != stream_end) {
-    buffer.push_back(*(stream_begin++));
-    if (buffer.size() == 2 * k) {
-      nth_element(buffer.begin(), buffer.begin() + (k - 1), buffer.end(),
+    buf[writeIndex++] = *(stream_begin++);
+    if (writeIndex == buf.size()) {
+      nth_element(buf.begin(), buf.begin() + k - 1, buf.begin() + writeIndex,
                   greater<int>());
-      buffer.resize(k);
+      writeIndex = k;
     }
   }
-  // last update
-  nth_element(buffer.begin(), buffer.begin() + (k - 1), buffer.end(),
+  // last update, perform 1 more nth element, extra the answer: begin + k - 1
+  nth_element(buf.begin(), buf.begin() + k - 1, buf.begin() + writeIndex,
               greater<int>());
-  return buffer[k - 1];
+  return buf[k - 1];
 }
+
+// Prev backup
+// int FindKthLargestUnknownLength(vector<int>::const_iterator stream_begin,
+//                                 const vector<int>::const_iterator
+//                                 &stream_end, int k) {
+//   // keep currently kth largest in the array
+//   vector<int> buffer;
+//   while (stream_begin != stream_end) {
+//     buffer.push_back(*(stream_begin++));
+//     if (buffer.size() == 2 * k) {
+//       nth_element(buffer.begin(), buffer.begin() + (k - 1), buffer.end(),
+//                   greater<int>());
+//       buffer.resize(k);
+//     }
+//   }
+//   // last update
+//   nth_element(buffer.begin(), buffer.begin() + (k - 1), buffer.end(),
+//               greater<int>());
+//   return buffer[k - 1];
+// }
 
 int FindKthLargestUnknownLengthHeap(
     vector<int>::const_iterator stream_begin,
