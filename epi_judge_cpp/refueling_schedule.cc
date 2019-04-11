@@ -6,22 +6,40 @@
 using std::vector;
 const int kMPG = 20;
 
-// gallons[i] is the amount of gas in city i, and distances[i] is the distance
-// city i to the next city.
 int FindAmpleCity(const vector<int> &gallons, const vector<int> &distances) {
-  // once we have negative gas, we need to start from here
-  int sz = gallons.size();
-  int curSum = 0, minSum = 0;
+  // find the minIndex position
   int minIndex = 0;
-  for (int i = 1; i < sz; i++) {
+  int minValue = 0;
+  int n = gallons.size();
+  int curSum = 0;
+  for (int i = 1; i < n; i++) {
     curSum += gallons[i - 1] * kMPG - distances[i - 1];
-    if (curSum < minSum) {
-      minSum = curSum;
+    if (curSum < minValue) {
+      minValue = curSum;
       minIndex = i;
     }
   }
   return minIndex;
 }
+
+// Prev Backup
+// // gallons[i] is the amount of gas in city i, and distances[i] is the
+// distance
+// // city i to the next city.
+// int FindAmpleCity(const vector<int> &gallons, const vector<int> &distances) {
+//   // once we have negative gas, we need to start from here
+//   int sz = gallons.size();
+//   int curSum = 0, minSum = 0;
+//   int minIndex = 0;
+//   for (int i = 1; i < sz; i++) {
+//     curSum += gallons[i - 1] * kMPG - distances[i - 1];
+//     if (curSum < minSum) {
+//       minSum = curSum;
+//       minIndex = i;
+//     }
+//   }
+//   return minIndex;
+// }
 void FindAmpleCityWrapper(TimedExecutor &executor, const vector<int> &gallons,
                           const vector<int> &distances) {
   int result = executor.Run([&] { return FindAmpleCity(gallons, distances); });
